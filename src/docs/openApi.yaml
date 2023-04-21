@@ -1,0 +1,209 @@
+openapi: 3.0.0
+info:
+  title: User CRUD.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+paths:
+  /user/registration:
+    post:
+      tags:
+        - User
+      summary: Registration user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/registrationUser"
+      responses:
+        201:
+          description: User registered.
+        400:
+          description: User with this email already exists.
+        500:
+          description: Server error.
+
+  /user/authorization:
+    post:
+      tags:
+        - User
+      summary: Authorization user .
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/authorizationUser"
+      responses:
+        201:
+          description: Token created.
+        404:
+          description: No such user exists.
+        400:
+          description: Wrong password.
+        500:
+          description: Server error.
+
+  /user/update:
+    patch:
+      security:
+        - bearerAuth: []
+      tags:
+        - User
+      summary: Update user data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/updateUser"
+      responses:
+        201:
+          description: User update.
+        400:
+          description: User with this email already exists.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
+  /user/update-password:
+    put:
+      security:
+        - bearerAuth: []
+      tags:
+        - User
+      summary: Update password .
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/updatePassword"
+      responses:
+        201:
+          description: Password changed in database.
+        400:
+          description: New passwords do not match or Wrong password.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
+  /user/list:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - User
+      summary: List all users.
+      responses:
+        200:
+          description: Succes.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
+  /user/drop:
+    delete:
+      security:
+        - bearerAuth: []
+      tags:
+        - User
+      summary: Delete user.
+      responses:
+        200:
+          description: Succes.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    registrationUser:
+      type: object
+      additionalProperties: false
+      required:
+        - password
+        - userEmail
+      properties:
+        firstName:
+          type: string
+          description: User first name
+          example: Yra
+        lastName:
+          type: string
+          description: User last name
+          example: Stell
+        userEmail:
+          type: string
+          description: User email
+          example: admin@example.com
+        password:
+          type: string
+          description: User password
+          example: "1234"
+
+    authorizationUser:
+      type: object
+      additionalProperties: false
+      required:
+        - password
+        - email
+      properties:
+        email:
+          type: string
+          description: User email
+          example: admin@example.com
+        password:
+          type: string
+          description: Password user.
+          example: "1234"
+
+    updateUser:
+      type: object
+      additionalProperties: false
+      properties:
+        firstName:
+          type: string
+          description: User first name.
+          example: Yra
+        lastName:
+          type: string
+          description: User last name.
+          example: Stell
+        email:
+          type: string
+          description: New user email.
+          example: pete7833@examples.com
+
+    updatePassword:
+      type: object
+      additionalProperties: false
+      required:
+        - oldPassword
+        - newPassword
+        - repeatNewPassword
+      properties:
+        oldPassword:
+          type: string
+          description: Old user password
+          example: "1234"
+        newPassword:
+          type: string
+          description: New user password
+          example: "12345"
+        repeatNewPassword:
+          type: string
+          description: Repeat new user password
+          example: "12345"

@@ -1,0 +1,17 @@
+{
+  "DBconfig": {
+    "database": "postgres",
+    "username": "Yra",
+    "dialect": "postgres",
+    "host": "localhost",
+    "port": 5432,
+    "password": "",
+    "omitNull": true
+  },
+  "app": {
+    "port": "3000"
+  },
+  "JWT": {
+    "key": ""
+  }
+}

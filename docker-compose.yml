@@ -1,0 +1,14 @@
+version: "3.1"
+
+volumes:
+  pg_selectel:
+
+services:
+  pg_db:
+    image: postgres:14.1-alpine
+    environment:
+      - POSTGRES_PASSWORD=123
+      - POSTGRES_USER=Yra
+      - POSTGRES_DB=postgres
+    ports:
+      - 5432:5432
