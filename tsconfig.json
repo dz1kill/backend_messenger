@@ -14,5 +14,5 @@
     "incremental": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "req_ws.js"]
 }

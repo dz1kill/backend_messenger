@@ -1,26 +1,29 @@
 import { IncomingMessage } from "http";
 import { Server } from "ws";
 import * as jwt from "jsonwebtoken";
+import { create } from "./dialog/service";
 
-const connectionsUser = new Map();
+const userConnections = new Map();
 
 export function connection(
-  connection: Server,
+  ws: Server,
   request: IncomingMessage,
   client: jwt.JwtPayload
 ) {
-  connectionsUser.set(client, connection);
-
-  connection.on("message", function message(rawMessageBuff) {
+  userConnections.set(client, ws);
+  ws.on("message", (rawMessageBuff) => {
     const rawMessage = rawMessageBuff.toString();
-    for (const client of connectionsUser.values()) {
-      if (client === connection) continue;
-      {
-        client.send(rawMessage, { binary: false });
-      }
+    const parseMessage = JSON.parse(rawMessage);
+    switch (parseMessage.type) {
+      case "createDialog":
+        create(parseMessage, client, ws);
+        break;
+      default:
+        console.log("err type");
+        break;
     }
   });
-  connection.on("close", function () {
-    connectionsUser.delete(client);
+  ws.on("close", () => {
+    userConnections.delete(client);
   });
 }

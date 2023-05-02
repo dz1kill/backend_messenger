@@ -4,11 +4,11 @@ import { wss } from "../index";
 import { IncomingMessage } from "http";
 import stream from "stream";
 
-export function authMiddlewareWs(
+export const authMiddlewareWs = (
   request: IncomingMessage,
   socket: stream.Duplex,
   head: Buffer
-) {
+) => {
   try {
     const token = request.headers.authorization.split(" ")[1];
     const data = jwt.verify(token, config.get("JWT.key"));
@@ -20,4 +20,4 @@ export function authMiddlewareWs(
     socket.destroy();
     return;
   }
-}
+};

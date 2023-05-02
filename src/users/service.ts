@@ -5,7 +5,9 @@ import {
   checkUser,
   generateJwt,
   hashPassword,
+  parseGroupUser,
 } from "./helper";
+import { Group } from "../models/group";
 
 export async function registrationUser(
   userEmail: string,
@@ -28,10 +30,21 @@ export async function registrationUser(
 }
 
 export async function authorizationUser(emailUser: string, password: string) {
-  const findUser = await User.findOne({ where: { email: emailUser } });
+  const findUser: any = await User.findOne({
+    where: { email: emailUser },
+    include: [
+      {
+        model: Group,
+        through: { attributes: [] },
+        attributes: ["id"],
+      },
+    ],
+  });
   checkUser(findUser);
   await checkPasswordUser(password, findUser.password);
-  const token = generateJwt(findUser.id, findUser.email);
+  const { id, email, groups }: User = findUser;
+  const arrGroup: number[] = parseGroupUser(groups);
+  const token = generateJwt(id, email, arrGroup);
   return { message: "User is authorized", token, statusCode: 201 };
 }
 

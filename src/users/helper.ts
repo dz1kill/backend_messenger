@@ -2,6 +2,7 @@ import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import * as config from "config";
 import { User } from "../models/user";
+import { Group } from "../models/group";
 
 export async function checkUniqueEmail(email: string) {
   const findUser = await User.findOne({ where: { email } });
@@ -30,8 +31,12 @@ export async function checkPasswordUser(
   }
 }
 
-export function generateJwt(id: number, email: string) {
-  return jwt.sign({ id, email }, config.get("JWT.key"), {
+export function generateJwt(id: number, email: string, groups) {
+  return jwt.sign({ id, email, groups }, config.get("JWT.key"), {
     expiresIn: "24h",
   });
+}
+
+export function parseGroupUser(groups: Group[]) {
+  return groups.map((group) => group.id);
 }

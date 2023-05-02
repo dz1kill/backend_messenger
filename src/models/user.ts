@@ -5,7 +5,12 @@ import {
   CreatedAt,
   UpdatedAt,
   DataType,
+  HasMany,
+  BelongsToMany,
 } from "sequelize-typescript";
+import { Message } from "./message";
+import { Group } from "./group";
+import { UserGroup } from "./group_user";
 
 @Table({
   tableName: "users",
@@ -42,6 +47,12 @@ export class User extends Model {
     allowNull: true,
   })
   email: string;
+
+  @HasMany(() => Message, "user_id")
+  messages: Message[];
+
+  @BelongsToMany(() => Group, () => UserGroup)
+  groups: Group[];
 
   @CreatedAt
   @Column({ field: "created_at" })
