@@ -10,6 +10,8 @@ import { User } from "./user";
 
 @Table({
   tableName: "users_groups",
+  timestamps: false,
+  underscored: true,
 })
 export class UserGroup extends Model {
   @Column({
@@ -23,7 +25,6 @@ export class UserGroup extends Model {
   @Column({
     type: DataType.INTEGER(),
     allowNull: false,
-    field: "group_id",
   })
   groupId: number;
 
@@ -31,7 +32,6 @@ export class UserGroup extends Model {
   @Column({
     type: DataType.INTEGER(),
     allowNull: false,
-    field: "user_id",
   })
   userId: number;
 }

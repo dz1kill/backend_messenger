@@ -9,6 +9,6 @@ services:
     environment:
       - POSTGRES_PASSWORD=123
       - POSTGRES_USER=Yra
-      - POSTGRES_DB=postgres
+      - POSTGRES_DB=websocket
     ports:
       - 5432:5432

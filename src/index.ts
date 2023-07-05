@@ -32,9 +32,9 @@ app.use((err, req, res, next) => {
     errors: err.errors,
   });
 });
-app.use("/", router);
 server.on("upgrade", authMiddlewareWs);
 wss.on("connection", connection);
+app.use("/", router);
 
 const start = async () => {
   try {

@@ -8,8 +8,25 @@ module.exports = {
         primaryKey: true,
         allowNull: false,
       },
+
       name: {
         type: Sequelize.STRING,
+        defaultValue: null,
+      },
+
+      created_at: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+
+      updated_at: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+
+      deleted_at: {
+        allowNull: true,
+        type: Sequelize.DATE,
       },
     });
   },

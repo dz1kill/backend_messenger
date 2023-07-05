@@ -2,16 +2,19 @@ import {
   Table,
   Column,
   Model,
-  CreatedAt,
   DataType,
   ForeignKey,
   BelongsTo,
+  HasMany,
 } from "sequelize-typescript";
 import { User } from "./user";
 import { Group } from "./group";
+import { Image } from "./image";
 
 @Table({
   tableName: "messages",
+  timestamps: true,
+  underscored: true,
 })
 export class Message extends Model {
   @Column({
@@ -25,18 +28,24 @@ export class Message extends Model {
   @Column({
     type: DataType.INTEGER(),
     allowNull: false,
-    field: "user_id",
   })
-  userId: number;
+  senderId: number;
 
   @BelongsTo(() => User)
-  user: User;
+  sender: User;
+
+  @ForeignKey(() => User)
+  @Column({
+    type: DataType.INTEGER(),
+  })
+  receiverId: number;
+
+  @BelongsTo(() => User)
+  receiver: User;
 
   @ForeignKey(() => Group)
   @Column({
     type: DataType.INTEGER(),
-    allowNull: false,
-    field: "group_id",
   })
   groupId: number;
 
@@ -45,11 +54,9 @@ export class Message extends Model {
 
   @Column({
     type: DataType.STRING(),
-    allowNull: false,
   })
   content: string;
 
-  @CreatedAt
-  @Column({ field: "created_at" })
-  createdAt: Date;
+  @HasMany(() => Image)
+  images: Image[];
 }

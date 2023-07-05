@@ -16,7 +16,6 @@ module.exports = {
         references: {
           model: "groups",
           key: "id",
-          as: "group_id",
         },
       },
 
@@ -27,7 +26,6 @@ module.exports = {
         references: {
           model: "users",
           key: "id",
-          as: "user_id",
         },
       },
     });

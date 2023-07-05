@@ -6,12 +6,14 @@ import {
   HasMany,
   BelongsToMany,
 } from "sequelize-typescript";
-import { Message } from "./message";
 import { UserGroup } from "./group_user";
 import { User } from "./user";
+import { Message } from "./message";
 
 @Table({
   tableName: "groups",
+  timestamps: false,
+  underscored: true,
 })
 export class Group extends Model {
   @Column({
@@ -23,13 +25,13 @@ export class Group extends Model {
 
   @Column({
     type: DataType.STRING(),
-    allowNull: false,
+    defaultValue: null,
   })
   name: string;
 
   @BelongsToMany(() => User, () => UserGroup)
-  user: User[];
+  authors: User[];
 
-  @HasMany(() => Message, "group_id")
-  messages: Message[];
+  @HasMany(() => Message)
+  mssages: Message[];
 }

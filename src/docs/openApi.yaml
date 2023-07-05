@@ -1,42 +1,23 @@
 openapi: 3.0.0
 info:
-  title: User CRUD.
+  title: Сhat.
   version: 1.0.0
 servers:
   - url: http://localhost:3000
     description: Development server
 
 paths:
-  /user/registration:
+  /auth/login:
     post:
       tags:
-        - User
-      summary: Registration user.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/registrationUser"
-      responses:
-        201:
-          description: User registered.
-        400:
-          description: User with this email already exists.
-        500:
-          description: Server error.
-
-  /user/authorization:
-    post:
-      tags:
-        - User
+        - Auth
       summary: Authorization user .
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/authorizationUser"
+              $ref: "#/components/schemas/loginUser"
       responses:
         201:
           description: Token created.
@@ -47,19 +28,38 @@ paths:
         500:
           description: Server error.
 
-  /user/update:
+  /auth/sing-up:
+    post:
+      tags:
+        - Auth
+      summary: Registration user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/singUpUser"
+      responses:
+        201:
+          description: User registered.
+        400:
+          description: User with this email already exists.
+        500:
+          description: Server error.
+
+  /profile/update:
     patch:
       security:
         - bearerAuth: []
       tags:
-        - User
+        - Profile
       summary: Update user data.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/updateUser"
+              $ref: "#/components/schemas/updateProfile"
       responses:
         201:
           description: User update.
@@ -70,19 +70,19 @@ paths:
         500:
           description: Server error.
 
-  /user/update-password:
-    put:
+  /profile/change-password:
+    patch:
       security:
         - bearerAuth: []
       tags:
-        - User
+        - Profile
       summary: Update password .
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/updatePassword"
+              $ref: "#/components/schemas/changePasswordProfile"
       responses:
         201:
           description: Password changed in database.
@@ -93,13 +93,13 @@ paths:
         500:
           description: Server error.
 
-  /user/list:
-    get:
+  /profile/destroy:
+    delete:
       security:
         - bearerAuth: []
       tags:
-        - User
-      summary: List all users.
+        - Profile
+      summary: Delete user.
       responses:
         200:
           description: Succes.
@@ -108,18 +108,14 @@ paths:
         500:
           description: Server error.
 
-  /user/drop:
-    delete:
-      security:
-        - bearerAuth: []
+  /users/list:
+    get:
       tags:
-        - User
-      summary: Delete user.
+        - Users
+      summary: List all users.
       responses:
         200:
           description: Succes.
-        401:
-          description: Not authorized.
         500:
           description: Server error.
 
@@ -130,7 +126,7 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    registrationUser:
+    singUpUser:
       type: object
       additionalProperties: false
       required:
@@ -140,7 +136,7 @@ components:
         firstName:
           type: string
           description: User first name
-          example: Yra
+          example: Don
         lastName:
           type: string
           description: User last name
@@ -154,7 +150,7 @@ components:
           description: User password
           example: "1234"
 
-    authorizationUser:
+    loginUser:
       type: object
       additionalProperties: false
       required:
@@ -170,24 +166,24 @@ components:
           description: Password user.
           example: "1234"
 
-    updateUser:
+    updateProfile:
       type: object
       additionalProperties: false
       properties:
         firstName:
           type: string
           description: User first name.
-          example: Yra
+          example: Derek
         lastName:
           type: string
           description: User last name.
-          example: Stell
+          example: Jordan
         email:
           type: string
           description: New user email.
           example: pete7833@examples.com
 
-    updatePassword:
+    changePasswordProfile:
       type: object
       additionalProperties: false
       required:

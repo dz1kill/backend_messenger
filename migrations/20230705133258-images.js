@@ -1,7 +1,7 @@
 "use strict";
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("messages", {
+    await queryInterface.createTable("images", {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
@@ -9,41 +9,25 @@ module.exports = {
         allowNull: false,
       },
 
-      sender_id: {
+      message_id: {
         type: Sequelize.INTEGER,
         onDelete: "CASCADE",
         allowNull: false,
         references: {
-          model: "users",
+          model: "messages",
           key: "id",
-          as: "sender",
+          as: "messages",
         },
       },
 
-      receiver_id: {
-        type: Sequelize.INTEGER,
-        onDelete: "CASCADE",
-        allowNull: true,
-        references: {
-          model: "users",
-          key: "id",
-          as: "receiver",
-        },
-      },
-
-      group_id: {
-        type: Sequelize.INTEGER,
-        onDelete: "CASCADE",
-        allowNull: true,
-        references: {
-          model: "groups",
-          key: "id",
-          as: "group",
-        },
-      },
-
-      content: {
+      name: {
         type: Sequelize.STRING,
+        allowNull: true,
+      },
+
+      url: {
+        type: Sequelize.STRING,
+        allowNull: false,
       },
 
       created_at: {
@@ -63,6 +47,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("messages");
+    await queryInterface.dropTable("images");
   },
 };
