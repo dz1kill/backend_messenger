@@ -1,29 +1,40 @@
 import { IncomingMessage } from "http";
-import { Server } from "ws";
 import * as jwt from "jsonwebtoken";
-import { addCientGroup } from "./helper";
+import WebSocket from "ws";
+import { parseBufferToJson } from "./helper";
+import { processingRequest } from "./processing_request";
+import { addAllGroupUser } from "./service";
 
 const userConnections = new Map();
 
 export function connection(
-  ws: Server,
+  ws: WebSocket,
   request: IncomingMessage,
   client: jwt.JwtPayload
 ) {
   userConnections.set(ws, client);
-  addCientGroup(userConnections, ws, client.id);
-  ws.on("message", (rawMessageBuff) => {
-    const rawMessage = rawMessageBuff.toString();
-    const parseMessage = JSON.parse(rawMessage);
-    switch (parseMessage.type) {
-      case "createDialog":
-        break;
-      default:
-        console.log("err type");
-        break;
+  addAllGroupUser(client);
+  ws.on("message", async (rawMessageBuff: Buffer) => {
+    try {
+      const parseMessage: Object = parseBufferToJson(rawMessageBuff);
+      const result = await processingRequest(parseMessage, client);
+      ws.send(
+        JSON.stringify({
+          statusCode: result.statusCode || 500,
+          messages: result.messages,
+        })
+      );
+    } catch (error) {
+      ws.send(
+        JSON.stringify({
+          statusCode: error.statusCode || 500,
+          messages: error.message || "Server error",
+        })
+      );
     }
   });
   ws.on("close", () => {
     userConnections.delete(ws);
   });
+  ws.on("error", console.error);
 }

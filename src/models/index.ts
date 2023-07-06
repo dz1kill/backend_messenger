@@ -6,7 +6,7 @@ import { UserGroup } from "./group_user";
 import { Message } from "./message";
 import { Image } from "./image";
 
-const connection = new Sequelize({
+const sequelize = new Sequelize({
   dialect: config.get("DBconfig.dialect"),
   host: config.get("DBconfig.host"),
   username: config.get("DBconfig.username"),
@@ -15,4 +15,4 @@ const connection = new Sequelize({
   models: [User, Group, UserGroup, Image, Message],
 });
 
-export default connection;
+export default sequelize;

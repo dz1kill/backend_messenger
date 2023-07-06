@@ -1,6 +1,22 @@
-import { User } from "../models/user";
-import * as jwt from "jsonwebtoken";
+import sequelize from "../models";
 
-export async function addCientGroup(userConnections, ws, clientId: number) {
-  const userGroup = await User.findOne({ where: { id: clientId } });
-}
+import { UserGroup } from "../models/group_user";
+
+export const getGroupsUser = async (id: number) => {
+  return await sequelize.query(
+    `SELECT group_id as "groupId"
+      FROM users_groups
+      WHERE user_id = ${id} 
+  `,
+    {
+      raw: true,
+      nest: true,
+      model: UserGroup,
+    }
+  );
+};
+
+export const parseBufferToJson = (rawMessageBuff: Buffer) => {
+  const rawMessage = rawMessageBuff.toString();
+  return JSON.parse(rawMessage);
+};
