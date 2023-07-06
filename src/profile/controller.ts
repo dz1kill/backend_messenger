@@ -1,9 +1,5 @@
 import { User } from "../models/user";
-import {
-  DropUserDto,
-  UpdatePasswordDTO,
-  UpdateUserDTO,
-} from "../types/profile";
+import { DropUserDto, UpdatePasswordDTO, UpdateUserDTO } from "./types";
 import { updatePasswordUser, updateUserData } from "./service";
 
 export async function updateUser(req: UpdateUserDTO, res) {

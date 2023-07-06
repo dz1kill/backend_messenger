@@ -1,4 +1,4 @@
-import { AuthorizationDTO, RegistrationDTO } from "../types/auth";
+import { AuthorizationDTO, RegistrationDTO } from "./types";
 import { authorizationUser, registrationUser } from "./service";
 import * as express from "express";
 

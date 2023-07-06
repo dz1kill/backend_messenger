@@ -1,18 +1,21 @@
 import { JwtPayload } from "jsonwebtoken";
 import sequelize from "../models";
-import { getGroupsUser } from "./helper";
+import { UserGroup } from "../models/group_user";
 import { Message } from "../models/message";
-import { ParramListLastMessage, ReqMessageDTO } from "./type";
+import { ParramListLastMessage, ReqMessageDTO } from "./types";
 
-export const addAllGroupUser = async (client: JwtPayload) => {
-  const { id } = client;
-  const userGroupArr = [];
-  const userGroups = await getGroupsUser(id);
-
-  userGroups.forEach((groupe) => {
-    userGroupArr.push(groupe.groupId);
-  });
-  client.groups = userGroupArr;
+export const getGroupsUser = async (id: number) => {
+  return await sequelize.query(
+    `SELECT group_id as "groupId"
+      FROM users_groups
+      WHERE user_id = ${id} 
+  `,
+    {
+      raw: true,
+      nest: true,
+      model: UserGroup,
+    }
+  );
 };
 
 export const listLastMessage = async (
@@ -37,5 +40,5 @@ export const listLastMessage = async (
       `,
     { raw: true, nest: true, model: Message }
   );
-  return { statusCode: 200, messages: result };
+  return { messages: result };
 };

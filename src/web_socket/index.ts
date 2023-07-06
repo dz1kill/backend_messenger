@@ -2,8 +2,8 @@ import { IncomingMessage } from "http";
 import * as jwt from "jsonwebtoken";
 import WebSocket from "ws";
 import { parseBufferToJson } from "./helper";
-import { processingRequest } from "./processing_request";
-import { addAllGroupUser } from "./service";
+import { processor } from "./processor";
+import { ParamsType, ReqMessageDTO } from "./types";
 
 const userConnections = new Map();
 
@@ -12,29 +12,31 @@ export function connection(
   request: IncomingMessage,
   client: jwt.JwtPayload
 ) {
-  userConnections.set(ws, client);
-  addAllGroupUser(client);
+  userConnections.set(client, ws);
+
   ws.on("message", async (rawMessageBuff: Buffer) => {
     try {
-      const parseMessage: Object = parseBufferToJson(rawMessageBuff);
-      const result = await processingRequest(parseMessage, client);
+      const parseMessage: ReqMessageDTO<ParamsType> =
+        parseBufferToJson(rawMessageBuff);
+      const result = await processor(parseMessage, client);
+
       ws.send(
         JSON.stringify({
-          statusCode: result.statusCode || 500,
           messages: result.messages,
         })
       );
     } catch (error) {
       ws.send(
         JSON.stringify({
-          statusCode: error.statusCode || 500,
           messages: error.message || "Server error",
         })
       );
     }
   });
+
   ws.on("close", () => {
-    userConnections.delete(ws);
+    userConnections.delete(client);
   });
+
   ws.on("error", console.error);
 }

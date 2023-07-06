@@ -6,3 +6,5 @@ export type ParramListLastMessage = {
   limit: number;
   page: number;
 };
+
+export type ParamsType = ParramListLastMessage;
