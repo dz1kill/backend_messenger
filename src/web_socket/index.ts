@@ -28,7 +28,7 @@ export function connection(
     } catch (error) {
       ws.send(
         JSON.stringify({
-          messages: error.message || "Server error",
+          error: error.message || "Server error",
         })
       );
     }

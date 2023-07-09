@@ -14,7 +14,6 @@ export const processor = async (
       return await listLastMessage(parsedMessage, client);
 
     default:
-      console.log("err type");
-      break;
+      throw { message: "Type error" };
   }
 };

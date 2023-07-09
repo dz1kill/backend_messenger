@@ -22,9 +22,7 @@ paths:
         201:
           description: Token created.
         404:
-          description: No such user exists.
-        400:
-          description: Wrong password.
+          description: No such user exists or wrong password.
         500:
           description: Server error.
 

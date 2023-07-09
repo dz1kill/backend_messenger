@@ -16,7 +16,7 @@ export async function hashPassword(passwordUser: string) {
 
 export function checkUser(findUser: User) {
   if (!findUser) {
-    throw { message: "No such user exists", statusCode: 404 };
+    throw { message: "No such user exists or wrong password", statusCode: 404 };
   }
 }
 
@@ -26,7 +26,7 @@ export async function checkPasswordUser(
 ) {
   const resultParse = await bcrypt.compare(passwordReq, passwordSaveInDB);
   if (!resultParse) {
-    throw { message: "Wrong password", statusCode: 400 };
+    throw { message: "No such user exists or wrong password", statusCode: 404 };
   }
 }
 
