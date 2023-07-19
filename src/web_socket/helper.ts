@@ -1,5 +1,6 @@
 import { ZodTypeAny, z } from "zod";
 import { ParamsType, ReqMessageDTO } from "./types";
+import { UserGroup } from "../models/group_user";
 
 export const listLastMessageSchema = z.object({
   type: z.string(),
@@ -52,4 +53,14 @@ export const validateByZod = (
   schema: ZodTypeAny
 ) => {
   schema.parse(data);
+};
+
+export const calcOffset = (page: number, limit: number) => (page - 1) * limit;
+
+export const transformArrUserGroup = (usersInGroup: UserGroup[]) => {
+  const userIds = [];
+  usersInGroup.forEach((user) => {
+    userIds.push(user.userId);
+  });
+  return userIds;
 };
