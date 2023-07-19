@@ -1,0 +1,42 @@
+// список последних чатов с последними сообщениями 
+{
+  "type": "listLastMessage",
+  "params": {
+    "limit": 5,
+    "page": 1
+  }
+}
+
+// последние сообщения в диалоге 
+{
+  "type": "getlatestMessageDialog",
+  "params": {
+    "receiverId":1,  
+    "limit": 5,
+    "page": 1
+  }
+}
+// последниее сообщения в группе 
+{
+  "type": "getlatestMessageGroup",
+  "params": {
+    "groupId": 1,
+    "limit": 5,
+    "page": 1
+  }
+}
+// создание группы 
+{
+  "type": "newGroup",
+  "params": {
+    "groupName": "new name"
+  }
+}
+// добавление пользователей в группу 
+{
+  "type": "addUserInGroup",
+  "params": {
+    "groupId": 1,
+    "userId": 1
+  }
+}

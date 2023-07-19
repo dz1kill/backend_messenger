@@ -18,7 +18,7 @@ export function connection(
     try {
       const parseMessage: ReqMessageDTO<ParamsType> =
         parseBufferToJson(rawMessageBuff);
-      const result = await processor(parseMessage, client);
+      const result = await processor(parseMessage, client, userConnections);
 
       ws.send(
         JSON.stringify({

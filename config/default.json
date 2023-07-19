@@ -1,6 +1,6 @@
 {
   "DBconfig": {
-    "database": "websocket",
+    "database": "messenger",
     "username": "Yra",
     "dialect": "postgres",
     "host": "localhost",
