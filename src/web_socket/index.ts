@@ -1,16 +1,16 @@
 import { IncomingMessage } from "http";
-import * as jwt from "jsonwebtoken";
 import WebSocket from "ws";
 import { parseBufferToJson } from "./helper";
 import { processor } from "./processor";
 import { ParamsType, ReqMessageDTO } from "./types";
+import { JwtPayload } from "jsonwebtoken";
 
-const userConnections = new Map();
+const userConnections: Map<JwtPayload, WebSocket> = new Map();
 
 export function connection(
   ws: WebSocket,
   request: IncomingMessage,
-  client: jwt.JwtPayload
+  client: JwtPayload
 ) {
   userConnections.set(client, ws);
 

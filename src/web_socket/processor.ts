@@ -1,4 +1,5 @@
 import { JwtPayload } from "jsonwebtoken";
+import WebSocket from "ws";
 import {
   addUserInGroup,
   latestMessageDialog,

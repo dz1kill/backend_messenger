@@ -11,6 +11,7 @@ import {
 } from "./types";
 import { UserGroup } from "../models/group_user";
 import { Group } from "../models/group";
+import WebSocket from "ws";
 
 const checkUserGroup = async (userId: number, groupId: number) => {
   const result = await sequelize.query(
