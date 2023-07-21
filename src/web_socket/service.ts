@@ -27,37 +27,37 @@ const checkUserGroup = async (userId: number, groupId: number) => {
   }
 };
 
-const insertGroup = async (groupName: string, trans: Transaction) =>
+const insertGroup = async (groupName: string, trx: Transaction) =>
   await sequelize.query(
     `
 INSERT INTO groups (name, created_at, updated_at, deleted_at )
 VALUES ('${groupName}',CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
 RETURNING id;
 `,
-    { raw: true, nest: true, model: Group, transaction: trans }
+    { raw: true, nest: true, model: Group, transaction: trx }
   );
 
 const insertUserGroup = async (
   groupId: number,
   userId: number,
-  trans: Transaction
+  trx: Transaction
 ) =>
   await sequelize.query(
     `
   INSERT INTO users_groups (group_id, user_id)
   VALUES (${groupId}, ${userId})
  `,
-    { transaction: trans }
+    { transaction: trx }
   );
 
-const selectUsersGroup = async (groupId: number, trans: Transaction) =>
+const selectUsersGroup = async (groupId: number, trx: Transaction) =>
   await sequelize.query(
     `
   SELECT user_id as "userId"
   FROM users_groups
   WHERE group_id = ${groupId}
   `,
-    { nest: true, raw: true, transaction: trans, model: UserGroup }
+    { nest: true, raw: true, transaction: trx, model: UserGroup }
   );
 
 const sendingMessages = (
@@ -189,10 +189,10 @@ export const newGroup = async (
   const { id } = client;
   const { groupName } = parsedMessage.params;
 
-  await sequelize.transaction(async (trans) => {
-    const group = await insertGroup(groupName, trans);
+  await sequelize.transaction(async (trx) => {
+    const group = await insertGroup(groupName, trx);
     const groupId = group[0].id;
-    await insertUserGroup(groupId, id, trans);
+    await insertUserGroup(groupId, id, trx);
   });
 
   return { messages: "Group created" };
@@ -208,12 +208,10 @@ export const addUserInGroup = async (
   const data = `User #${userId} added in group`;
 
   await checkUserGroup(id, groupId);
-  const usersInGroup = await sequelize.transaction(async (trans) => {
-    await insertUserGroup(groupId, userId, trans);
-    return await selectUsersGroup(groupId, trans);
+  const usersInGroup = await sequelize.transaction(async (trx) => {
+    await insertUserGroup(groupId, userId, trx);
+    return await selectUsersGroup(groupId, trx);
   });
   const userIds: number[] = transformArrUserGroup(usersInGroup);
   sendingMessages(userIds, userConnections, id, data);
-
-  return { messages: `User #${userId} added in group` };
 };

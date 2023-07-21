@@ -18,17 +18,11 @@ export function connection(
     try {
       const parseMessage: ReqMessageDTO<ParamsType> =
         parseBufferToJson(rawMessageBuff);
-      const result = await processor(parseMessage, client, userConnections);
-
-      ws.send(
-        JSON.stringify({
-          messages: result.messages,
-        })
-      );
+      processor(parseMessage, client, userConnections, ws);
     } catch (error) {
       ws.send(
         JSON.stringify({
-          error: error.message || "Server error",
+          error: error.message || "Processor error",
         })
       );
     }

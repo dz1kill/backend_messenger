@@ -20,33 +20,89 @@ import { ParamsType, ReqMessageDTO } from "./types";
 export const processor = async (
   parsedMessage: ReqMessageDTO<ParamsType>,
   client: JwtPayload,
-  userConnections: Map<JwtPayload, WebSocket>
+  userConnections: Map<JwtPayload, WebSocket>,
+  ws: WebSocket
 ) => {
   switch (parsedMessage.type) {
     case "listLastMessage":
-      validateByZod(parsedMessage, listLastMessageSchema);
-
-      return await listLastMessage(parsedMessage, client);
+      try {
+        validateByZod(parsedMessage, listLastMessageSchema);
+        const result = await listLastMessage(parsedMessage, client);
+        ws.send(
+          JSON.stringify({
+            messages: result.messages,
+          })
+        );
+      } catch (error) {
+        ws.send(
+          JSON.stringify({
+            error: error.message || "processor.listLastMessage error",
+          })
+        );
+      }
 
     case "getlatestMessageDialog":
-      validateByZod(parsedMessage, latestMessagesDialogSchema);
-
-      return await latestMessageDialog(parsedMessage, client);
+      try {
+        validateByZod(parsedMessage, latestMessagesDialogSchema);
+        const result = await latestMessageDialog(parsedMessage, client);
+        ws.send(
+          JSON.stringify({
+            messages: result.messages,
+          })
+        );
+      } catch (error) {
+        ws.send(
+          JSON.stringify({
+            error: error.message || "processor.getlatestMessageDialog error",
+          })
+        );
+      }
 
     case "getlatestMessageGroup":
-      validateByZod(parsedMessage, latestMessagesGroupSchema);
-
-      return await latestMessageGroup(parsedMessage, client);
+      try {
+        validateByZod(parsedMessage, latestMessagesGroupSchema);
+        const result = await latestMessageGroup(parsedMessage, client);
+        ws.send(
+          JSON.stringify({
+            messages: result.messages,
+          })
+        );
+      } catch (error) {
+        ws.send(
+          JSON.stringify({
+            error: error.message || "processor.getlatestMessageGroup error",
+          })
+        );
+      }
 
     case "newGroup":
-      validateByZod(parsedMessage, newGroupSchema);
-
-      return await newGroup(parsedMessage, client);
+      try {
+        validateByZod(parsedMessage, newGroupSchema);
+        const result = await newGroup(parsedMessage, client);
+        ws.send(
+          JSON.stringify({
+            messages: result.messages,
+          })
+        );
+      } catch (error) {
+        ws.send(
+          JSON.stringify({
+            error: error.message || "processor.newGroup error",
+          })
+        );
+      }
 
     case "addUserInGroup":
-      validateByZod(parsedMessage, addUserInGroupSchema);
-
-      return addUserInGroup(parsedMessage, client, userConnections);
+      try {
+        validateByZod(parsedMessage, addUserInGroupSchema);
+        addUserInGroup(parsedMessage, client, userConnections);
+      } catch (error) {
+        ws.send(
+          JSON.stringify({
+            error: error.message || "processor.addUserInGroup error",
+          })
+        );
+      }
 
     default:
       throw { message: "There is no such type" };
