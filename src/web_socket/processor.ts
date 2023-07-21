@@ -4,18 +4,33 @@ import {
   addUserInGroup,
   latestMessageDialog,
   latestMessageGroup,
+  leaveGroup,
   listLastMessage,
+  sendMessageGroup,
   newGroup,
 } from "./service";
 import {
+  MessageInGroupSchema,
   addUserInGroupSchema,
+  buildErrorResponse,
+  buildSuccessResponse,
   latestMessagesDialogSchema,
   latestMessagesGroupSchema,
+  leaveGroupSchema,
   listLastMessageSchema,
   newGroupSchema,
   validateByZod,
 } from "./helper";
 import { ParamsType, ReqMessageDTO } from "./types";
+import {
+  ADD_USER_IN_GROUP,
+  GET_LATEST_MESSAGE_DIALOG,
+  GET_LATEST_MESSAGE_GROUP,
+  LEAVE_GROUP,
+  LIST_LAST_MESSAGE,
+  MESSAGE_IN_GROUP,
+  NEW_GROUP,
+} from "./constants";
 
 export const processor = async (
   parsedMessage: ReqMessageDTO<ParamsType>,
@@ -24,86 +39,84 @@ export const processor = async (
   ws: WebSocket
 ) => {
   switch (parsedMessage.type) {
-    case "listLastMessage":
+    case LIST_LAST_MESSAGE:
       try {
         validateByZod(parsedMessage, listLastMessageSchema);
         const result = await listLastMessage(parsedMessage, client);
-        ws.send(
-          JSON.stringify({
-            messages: result.messages,
-          })
-        );
+        buildSuccessResponse(ws, result, LIST_LAST_MESSAGE);
       } catch (error) {
-        ws.send(
-          JSON.stringify({
-            error: error.message || "processor.listLastMessage error",
-          })
-        );
+        buildErrorResponse(ws, error, LIST_LAST_MESSAGE);
       }
+      break;
 
-    case "getlatestMessageDialog":
+    case GET_LATEST_MESSAGE_DIALOG:
       try {
         validateByZod(parsedMessage, latestMessagesDialogSchema);
         const result = await latestMessageDialog(parsedMessage, client);
-        ws.send(
-          JSON.stringify({
-            messages: result.messages,
-          })
-        );
+        buildSuccessResponse(ws, result, GET_LATEST_MESSAGE_DIALOG);
       } catch (error) {
-        ws.send(
-          JSON.stringify({
-            error: error.message || "processor.getlatestMessageDialog error",
-          })
-        );
+        buildErrorResponse(ws, error, GET_LATEST_MESSAGE_DIALOG);
       }
+      break;
 
-    case "getlatestMessageGroup":
+    case GET_LATEST_MESSAGE_GROUP:
       try {
         validateByZod(parsedMessage, latestMessagesGroupSchema);
         const result = await latestMessageGroup(parsedMessage, client);
-        ws.send(
-          JSON.stringify({
-            messages: result.messages,
-          })
-        );
+        buildSuccessResponse(ws, result, GET_LATEST_MESSAGE_GROUP);
       } catch (error) {
-        ws.send(
-          JSON.stringify({
-            error: error.message || "processor.getlatestMessageGroup error",
-          })
-        );
+        buildErrorResponse(ws, error, GET_LATEST_MESSAGE_GROUP);
       }
+      break;
 
-    case "newGroup":
+    case NEW_GROUP:
       try {
         validateByZod(parsedMessage, newGroupSchema);
         const result = await newGroup(parsedMessage, client);
-        ws.send(
-          JSON.stringify({
-            messages: result.messages,
-          })
-        );
+        buildSuccessResponse(ws, result, NEW_GROUP);
       } catch (error) {
-        ws.send(
-          JSON.stringify({
-            error: error.message || "processor.newGroup error",
-          })
-        );
+        buildErrorResponse(ws, error, NEW_GROUP);
       }
+      break;
 
-    case "addUserInGroup":
+    case ADD_USER_IN_GROUP:
       try {
         validateByZod(parsedMessage, addUserInGroupSchema);
-        addUserInGroup(parsedMessage, client, userConnections);
-      } catch (error) {
-        ws.send(
-          JSON.stringify({
-            error: error.message || "processor.addUserInGroup error",
-          })
+        const result = await addUserInGroup(
+          parsedMessage,
+          client,
+          userConnections
         );
+        buildSuccessResponse(ws, result, ADD_USER_IN_GROUP);
+      } catch (error) {
+        buildErrorResponse(ws, error, ADD_USER_IN_GROUP);
+      }
+      break;
+
+    case LEAVE_GROUP:
+      try {
+        validateByZod(parsedMessage, leaveGroupSchema);
+        const result = await leaveGroup(parsedMessage, client, userConnections);
+        buildSuccessResponse(ws, result, LEAVE_GROUP);
+      } catch (error) {
+        buildErrorResponse(ws, error, LEAVE_GROUP);
+      }
+      break;
+
+    case MESSAGE_IN_GROUP:
+      try {
+        validateByZod(parsedMessage, MessageInGroupSchema);
+        const result = await sendMessageGroup(
+          parsedMessage,
+          client,
+          userConnections
+        );
+        buildSuccessResponse(ws, result, MESSAGE_IN_GROUP);
+      } catch (error) {
+        buildErrorResponse(ws, error, MESSAGE_IN_GROUP);
       }
 
+      break;
     default:
       throw { message: "There is no such type" };
   }

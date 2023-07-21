@@ -1,6 +1,6 @@
 import { IncomingMessage } from "http";
 import WebSocket from "ws";
-import { parseBufferToJson } from "./helper";
+import { buildErrorResponse, parseBufferToJson } from "./helper";
 import { processor } from "./processor";
 import { ParamsType, ReqMessageDTO } from "./types";
 import { JwtPayload } from "jsonwebtoken";
@@ -18,13 +18,10 @@ export function connection(
     try {
       const parseMessage: ReqMessageDTO<ParamsType> =
         parseBufferToJson(rawMessageBuff);
-      processor(parseMessage, client, userConnections, ws);
+      await processor(parseMessage, client, userConnections, ws);
     } catch (error) {
-      ws.send(
-        JSON.stringify({
-          error: error.message || "Processor error",
-        })
-      );
+      const scope = "processor";
+      buildErrorResponse(ws, error, scope);
     }
   });
 

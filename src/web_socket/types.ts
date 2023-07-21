@@ -1,3 +1,5 @@
+import { Message } from "../models/message";
+
 export type ReqMessageDTO<T> = {
   type: string;
   params: T;
@@ -28,8 +30,22 @@ export type ParramAddUserInGroup = {
   groupId: number;
 };
 
+export type ParramLeaveGroup = {
+  groupId: number;
+};
+
+export type ParramMessageGroup = {
+  groupId: number;
+  content: string;
+};
+
 export type ParamsType = ParramListLastMessage &
   ParramLastMessagesDialog &
   ParramLastMessagesGroup &
   ParramNewGroup &
-  ParramAddUserInGroup;
+  ParramAddUserInGroup &
+  ParramMessageGroup;
+
+export type ParamsbuildSuccessResponse = {
+  messages: string | Message[];
+};

@@ -1,6 +1,7 @@
 import { ZodTypeAny, z } from "zod";
-import { ParamsType, ReqMessageDTO } from "./types";
+import { ParamsType, ParamsbuildSuccessResponse, ReqMessageDTO } from "./types";
 import { UserGroup } from "../models/group_user";
+import WebSocket from "ws";
 
 export const listLastMessageSchema = z.object({
   type: z.string(),
@@ -43,6 +44,21 @@ export const addUserInGroupSchema = z.object({
   }),
 });
 
+export const leaveGroupSchema = z.object({
+  type: z.string(),
+  params: z.object({
+    groupId: z.number(),
+  }),
+});
+
+export const MessageInGroupSchema = z.object({
+  type: z.string(),
+  params: z.object({
+    groupId: z.number(),
+    content: z.string(),
+  }),
+});
+
 export const parseBufferToJson = (rawMessageBuff: Buffer) => {
   const rawMessage = rawMessageBuff.toString();
   return JSON.parse(rawMessage);
@@ -63,4 +79,32 @@ export const transformArrUserGroup = (usersInGroup: UserGroup[]) => {
     userIds.push(user.userId);
   });
   return userIds;
+};
+
+export const buildErrorResponse = (
+  ws: WebSocket,
+  error: Error,
+  scope: string
+) => {
+  ws.send(
+    JSON.stringify({
+      error: true,
+      scope,
+      message: error?.message,
+    })
+  );
+};
+
+export const buildSuccessResponse = (
+  ws: WebSocket,
+  result: ParamsbuildSuccessResponse,
+  scope: string
+) => {
+  ws.send(
+    JSON.stringify({
+      success: true,
+      scope,
+      data: result.messages,
+    })
+  );
 };

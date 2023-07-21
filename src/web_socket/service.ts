@@ -2,18 +2,26 @@ import { JwtPayload } from "jsonwebtoken";
 import sequelize from "../models";
 import { Message } from "../models/message";
 import {
+  ParamsbuildSuccessResponse,
   ParramAddUserInGroup,
   ParramLastMessagesDialog,
   ParramLastMessagesGroup,
+  ParramLeaveGroup,
   ParramListLastMessage,
+  ParramMessageGroup,
   ParramNewGroup,
   ReqMessageDTO,
 } from "./types";
 import { UserGroup } from "../models/group_user";
 import { Group } from "../models/group";
 import WebSocket from "ws";
-import { calcOffset, transformArrUserGroup } from "./helper";
+import {
+  buildSuccessResponse,
+  calcOffset,
+  transformArrUserGroup,
+} from "./helper";
 import { Transaction } from "sequelize";
+import { ADD_USER_IN_GROUP, LEAVE_GROUP, MESSAGE_IN_GROUP } from "./constants";
 
 const checkUserGroup = async (userId: number, groupId: number) => {
   const result = await sequelize.query(
@@ -37,43 +45,36 @@ RETURNING id;
     { raw: true, nest: true, model: Group, transaction: trx }
   );
 
-const insertUserGroup = async (
-  groupId: number,
-  userId: number,
-  trx: Transaction
-) =>
+const insertUserGroup = async (groupId: number, userId: number) =>
   await sequelize.query(
     `
   INSERT INTO users_groups (group_id, user_id)
   VALUES (${groupId}, ${userId})
  `,
-    { transaction: trx }
+    { model: UserGroup }
   );
 
-const selectUsersGroup = async (groupId: number, trx: Transaction) =>
+const selectUsersGroup = async (groupId: number) =>
   await sequelize.query(
     `
   SELECT user_id as "userId"
   FROM users_groups
   WHERE group_id = ${groupId}
   `,
-    { nest: true, raw: true, transaction: trx, model: UserGroup }
+    { nest: true, raw: true, model: UserGroup }
   );
 
 const sendingMessages = (
   recipientIds: number[],
   userConnections: Map<JwtPayload, WebSocket>,
   senderId: number,
-  data: string
+  data: ParamsbuildSuccessResponse,
+  scope: string
 ) => {
   recipientIds.forEach((userInGroup) => {
     userConnections.forEach((ws, user) => {
       if (userInGroup === user.id && user.id !== senderId) {
-        ws.send(
-          JSON.stringify({
-            messages: data,
-          })
-        );
+        buildSuccessResponse(ws, data, scope);
       }
     });
   });
@@ -143,6 +144,31 @@ const getDblatestMessageGroup = async (
     { raw: true, nest: true, model: Message }
   );
 
+const dropUserGroup = async (userId: number, groupId: number) => {
+  await sequelize.query(
+    `
+    DELETE FROM users_groups
+    WHERE group_id = ${groupId} AND user_id = ${userId}`,
+    { model: UserGroup }
+  );
+};
+
+const insertMessageGroup = async (
+  senderId: number,
+  groupId: number,
+  content: string
+) => {
+  await sequelize.query(
+    `
+  
+  INSERT INTO messages (sender_id, receiver_id, group_id, content,  created_at, updated_at, deleted_at )
+  VALUES (${senderId}, NULL, ${groupId}, '${content}' ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+
+  `,
+    { model: Message }
+  );
+};
+
 export const listLastMessage = async (
   parseMessage: ReqMessageDTO<ParramListLastMessage>,
   client: JwtPayload
@@ -192,10 +218,10 @@ export const newGroup = async (
   await sequelize.transaction(async (trx) => {
     const group = await insertGroup(groupName, trx);
     const groupId = group[0].id;
-    await insertUserGroup(groupId, id, trx);
+    await insertUserGroup(groupId, id);
   });
 
-  return { messages: "Group created" };
+  return { messages: null };
 };
 
 export const addUserInGroup = async (
@@ -203,15 +229,53 @@ export const addUserInGroup = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id } = client;
+  const { id, email } = client;
   const { groupId, userId } = parsedMessage.params;
-  const data = `User #${userId} added in group`;
+  const data = { messages: `User #${email} added in group.` };
 
   await checkUserGroup(id, groupId);
-  const usersInGroup = await sequelize.transaction(async (trx) => {
-    await insertUserGroup(groupId, userId, trx);
-    return await selectUsersGroup(groupId, trx);
-  });
+  await insertUserGroup(groupId, userId);
+  const usersInGroup = await selectUsersGroup(groupId);
   const userIds: number[] = transformArrUserGroup(usersInGroup);
-  sendingMessages(userIds, userConnections, id, data);
+  sendingMessages(userIds, userConnections, id, data, ADD_USER_IN_GROUP);
+
+  return { messages: null };
+};
+
+export const leaveGroup = async (
+  parsedMessage: ReqMessageDTO<ParramLeaveGroup>,
+  client: JwtPayload,
+  userConnections: Map<JwtPayload, WebSocket>
+) => {
+  const { id, email } = client;
+  const { groupId } = parsedMessage.params;
+  const data = { messages: `User ${email} has left the group.` };
+
+  await checkUserGroup(id, groupId);
+  await dropUserGroup(id, groupId);
+  const usersInGroup = await selectUsersGroup(groupId);
+
+  const userIds: number[] = transformArrUserGroup(usersInGroup);
+  sendingMessages(userIds, userConnections, id, data, LEAVE_GROUP);
+
+  return {
+    messages: null,
+  };
+};
+
+export const sendMessageGroup = async (
+  parsedMessage: ReqMessageDTO<ParramMessageGroup>,
+  client: JwtPayload,
+  userConnections: Map<JwtPayload, WebSocket>
+) => {
+  const { id } = client;
+  const { groupId, content } = parsedMessage.params;
+  const data = { messages: content };
+
+  await checkUserGroup(id, groupId);
+  insertMessageGroup(id, groupId, content);
+  const usersInGroup = await selectUsersGroup(groupId);
+  const userIds: number[] = transformArrUserGroup(usersInGroup);
+  sendingMessages(userIds, userConnections, id, data, MESSAGE_IN_GROUP);
+  return { messages: null };
 };

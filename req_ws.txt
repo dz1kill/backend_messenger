@@ -40,3 +40,21 @@
     "userId": 1
   }
 }
+
+// выйти из группы 
+{
+  "type": "leaveGroup",
+  "params": {
+    "groupId": 1
+  }
+}
+
+// сообщения в группе 
+
+{
+  "type": "messageInGroup",
+  "params": {
+    "groupId": 1,
+    "content": "lol"
+  }
+}
