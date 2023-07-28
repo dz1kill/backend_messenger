@@ -1,0 +1,203 @@
+openapi: 3.0.0
+info:
+  title: Messenger.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Authorization user .
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/loginUser"
+      responses:
+        201:
+          description: Token created.
+        404:
+          description: No such user exists or wrong password.
+        500:
+          description: Server error.
+
+  /auth/sing-up:
+    post:
+      tags:
+        - Auth
+      summary: Registration user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/singUpUser"
+      responses:
+        201:
+          description: User registered.
+        400:
+          description: User with this email already exists.
+        500:
+          description: Server error.
+
+  /profile/update:
+    patch:
+      security:
+        - bearerAuth: []
+      tags:
+        - Profile
+      summary: Update user data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/updateProfile"
+      responses:
+        201:
+          description: User update.
+        400:
+          description: User with this email already exists.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
+  /profile/change-password:
+    patch:
+      security:
+        - bearerAuth: []
+      tags:
+        - Profile
+      summary: Update password .
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/changePasswordProfile"
+      responses:
+        201:
+          description: Password changed in database.
+        400:
+          description: New passwords do not match or Wrong password.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
+  /profile/destroy:
+    delete:
+      security:
+        - bearerAuth: []
+      tags:
+        - Profile
+      summary: Delete user.
+      responses:
+        200:
+          description: Succes.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
+  /users/list:
+    get:
+      tags:
+        - Users
+      summary: List all users.
+      responses:
+        200:
+          description: Succes.
+        500:
+          description: Server error.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    singUpUser:
+      type: object
+      additionalProperties: false
+      required:
+        - password
+        - userEmail
+      properties:
+        firstName:
+          type: string
+          description: User first name
+          example: Don
+        lastName:
+          type: string
+          description: User last name
+          example: Stell
+        userEmail:
+          type: string
+          description: User email
+          example: admin@example.com
+        password:
+          type: string
+          description: User password
+          example: "1234"
+
+    loginUser:
+      type: object
+      additionalProperties: false
+      required:
+        - password
+        - email
+      properties:
+        email:
+          type: string
+          description: User email
+          example: admin@example.com
+        password:
+          type: string
+          description: Password user.
+          example: "1234"
+
+    updateProfile:
+      type: object
+      additionalProperties: false
+      properties:
+        firstName:
+          type: string
+          description: User first name.
+          example: Derek
+        lastName:
+          type: string
+          description: User last name.
+          example: Jordan
+        email:
+          type: string
+          description: New user email.
+          example: pete7833@examples.com
+
+    changePasswordProfile:
+      type: object
+      additionalProperties: false
+      required:
+        - oldPassword
+        - newPassword
+        - repeatNewPassword
+      properties:
+        oldPassword:
+          type: string
+          description: Old user password
+          example: "1234"
+        newPassword:
+          type: string
+          description: New user password
+          example: "12345"
+        repeatNewPassword:
+          type: string
+          description: Repeat new user password
+          example: "12345"
