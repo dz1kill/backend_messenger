@@ -205,7 +205,7 @@ export const listLastMessage = async (
   const offset = calcOffset(page, limit);
   const result = await getDblistLastMessage(id, limit, offset);
 
-  return { data: result, message: null };
+  return { data: result };
 };
 
 export const latestMessageDialog = async (
@@ -217,7 +217,7 @@ export const latestMessageDialog = async (
   const offset = calcOffset(page, limit);
   const result = await getDblatestMessageDialog(id, receiverId, limit, offset);
 
-  return { data: result, message: null };
+  return { data: result };
 };
 
 export const latestMessageGroup = async (
@@ -231,7 +231,7 @@ export const latestMessageGroup = async (
   await checkUserGroup(id, groupId);
   const result = await getDblatestMessageGroup(groupId, limit, offset);
 
-  return { data: result, message: null };
+  return { data: result };
 };
 
 export const newGroup = async (
@@ -247,7 +247,7 @@ export const newGroup = async (
     await insertUserGroup(groupId, id, trx);
   });
 
-  return { data: null, message: null };
+  return {};
 };
 
 export const addUserInGroup = async (
@@ -255,9 +255,12 @@ export const addUserInGroup = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id, email } = client;
+  const { id, email, firstName } = client;
   const { groupId, userId } = parsedMessage.params;
-  const data = { message: `User #${email} added in group.`, data: null };
+  const data: ParramsResultSuccessResponse = {
+    message: `User #${email} added in group.`,
+    senderName: firstName,
+  };
 
   await checkUserGroup(id, groupId);
   await sequelize.transaction(async (trx) => {
@@ -269,7 +272,7 @@ export const addUserInGroup = async (
 
   sendingMessages(userIds, userConnections, id, data, ADD_USER_IN_GROUP);
 
-  return { data: null, message: null };
+  return {};
 };
 
 export const leaveGroup = async (
@@ -277,9 +280,12 @@ export const leaveGroup = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id, email } = client;
+  const { id, email, firstName } = client;
   const { groupId } = parsedMessage.params;
-  const data = { message: `User ${email} has left the group.`, data: null };
+  const data: ParramsResultSuccessResponse = {
+    message: `User ${email} has left the group.`,
+    senderName: firstName,
+  };
 
   await checkUserGroup(id, groupId);
   await dropUserGroup(id, groupId);
@@ -289,7 +295,7 @@ export const leaveGroup = async (
 
   sendingMessages(userIds, userConnections, id, data, LEAVE_GROUP);
 
-  return { data: null, message: null };
+  return {};
 };
 
 export const sendMessageGroup = async (
@@ -297,9 +303,12 @@ export const sendMessageGroup = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id } = client;
+  const { id, firstName } = client;
   const { groupId, content } = parsedMessage.params;
-  const data = { message: content, data: null };
+  const data: ParramsResultSuccessResponse = {
+    message: content,
+    senderName: firstName,
+  };
 
   await checkUserGroup(id, groupId);
   insertMessageGroup(id, groupId, content);
@@ -309,7 +318,7 @@ export const sendMessageGroup = async (
 
   sendingMessages(userIds, userConnections, id, data, MESSAGE_IN_GROUP);
 
-  return { data: null, message: null };
+  return {};
 };
 
 export const sendPrivateMessage = async (
@@ -317,13 +326,16 @@ export const sendPrivateMessage = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id } = client;
+  const { id, firstName } = client;
   const { receiverId, content } = parsedMessage.params;
   const receiverIdArr = [receiverId];
-  const data = { message: content, data: null };
+  const data: ParramsResultSuccessResponse = {
+    message: content,
+    senderName: firstName,
+  };
 
   await insertPrivateMessage(id, receiverId, content);
   sendingMessages(receiverIdArr, userConnections, id, data, PRIVATE_MESSAGE);
 
-  return { data: null, message: null };
+  return {};
 };

@@ -1,9 +1,10 @@
 import { ZodTypeAny, z } from "zod";
 import {
   ParamsType,
-  ParamsBuildSuccessResponse,
   ReqMessageDTO,
   ParramsResultSuccessResponse,
+  ParamsBuildSuccessResponse,
+  ParamsBuildErroResponse,
 } from "./types";
 import { UserGroup } from "../models/group_user";
 import WebSocket from "ws";
@@ -97,30 +98,29 @@ export const transformArrUserGroup = (usersInGroup: UserGroup[]) => {
 export const buildErrorResponse = (
   ws: WebSocket,
   error: Error,
-  scope: string
+  type: string
 ) => {
-  ws.send(
-    JSON.stringify({
-      error: true,
-      scope,
-      message: error?.message,
-    })
-  );
+  const buildResponse: ParamsBuildErroResponse = {
+    error: true,
+    type,
+    message: error?.message,
+  };
+  ws.send(JSON.stringify(buildResponse));
 };
 
 export const buildSuccessResponse = (
   ws: WebSocket,
-  result: ParramsResultSuccessResponse,
+  params: ParramsResultSuccessResponse,
   type: string
 ) => {
-  ws.send(
-    JSON.stringify({
-      type,
-      success: true,
-      params: {
-        data: result.data,
-        message: result.message,
-      },
-    })
-  );
+  const buildResponse: ParamsBuildSuccessResponse = {
+    type,
+    success: true,
+    params: {
+      data: params.data || null,
+      message: params.message || null,
+      senderName: params.senderName || null,
+    },
+  };
+  ws.send(JSON.stringify(buildResponse));
 };

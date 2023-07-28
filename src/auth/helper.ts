@@ -30,8 +30,8 @@ export async function checkPasswordUser(
   }
 }
 
-export function generateJwt(id: number, email: string) {
-  return jwt.sign({ id, email }, config.get("JWT.key"), {
+export function generateJwt(id: number, email: string, firstName: string) {
+  return jwt.sign({ id, email, firstName }, config.get("JWT.key"), {
     expiresIn: "24h",
   });
 }

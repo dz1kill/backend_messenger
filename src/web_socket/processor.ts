@@ -23,11 +23,7 @@ import {
   privateMessageSchema,
   validateByZod,
 } from "./helper";
-import {
-  ParamsType,
-  ParramsResultSuccessResponse,
-  ReqMessageDTO,
-} from "./types";
+import { ParamsType, ReqMessageDTO } from "./types";
 import {
   ADD_USER_IN_GROUP,
   GET_LATEST_MESSAGE_DIALOG,

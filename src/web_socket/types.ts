@@ -55,12 +55,19 @@ export type ParamsType = ParramListLastMessage &
   ParramPrivateMessage;
 
 export type ParramsResultSuccessResponse = {
-  data: ParramsResData | null;
-  message: string | null;
+  data?: ParramsResData | null;
+  message?: string | null;
+  senderName?: string | null;
 };
 
 export type ParamsBuildSuccessResponse = {
   type: string;
   success: true;
-  result: ParramsResultSuccessResponse;
+  params: ParramsResultSuccessResponse;
+};
+
+export type ParamsBuildErroResponse = {
+  error: true;
+  type: string;
+  message: string;
 };
