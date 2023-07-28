@@ -19,7 +19,7 @@ MVP Backend for messenger.
 
 Stack: Node.js, Express, WS, PostgreSQL, Sequelize-typescript, JWT.
 
-## Examples of responses and responses websocket :
+## Examples of websocket requests and responses :
 
 1. Connection to the websocket occurs via the http protocol.  
    In the connection request, the user token must be passed in the header.
