@@ -5,3 +5,4 @@ export const NEW_GROUP = "newGroup";
 export const ADD_USER_IN_GROUP = "addUserInGroup";
 export const LEAVE_GROUP = "leaveGroup";
 export const MESSAGE_IN_GROUP = "messageInGroup";
+export const PRIVATE_MESSAGE = "privateMessage";

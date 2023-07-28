@@ -8,6 +8,7 @@ import {
   listLastMessage,
   sendMessageGroup,
   newGroup,
+  sendPrivateMessage,
 } from "./service";
 import {
   MessageInGroupSchema,
@@ -19,9 +20,14 @@ import {
   leaveGroupSchema,
   listLastMessageSchema,
   newGroupSchema,
+  privateMessageSchema,
   validateByZod,
 } from "./helper";
-import { ParamsType, ReqMessageDTO } from "./types";
+import {
+  ParamsType,
+  ParramsResultSuccessResponse,
+  ReqMessageDTO,
+} from "./types";
 import {
   ADD_USER_IN_GROUP,
   GET_LATEST_MESSAGE_DIALOG,
@@ -30,6 +36,7 @@ import {
   LIST_LAST_MESSAGE,
   MESSAGE_IN_GROUP,
   NEW_GROUP,
+  PRIVATE_MESSAGE,
 } from "./constants";
 
 export const processor = async (
@@ -117,6 +124,22 @@ export const processor = async (
       }
 
       break;
+
+    case PRIVATE_MESSAGE:
+      try {
+        validateByZod(parsedMessage, privateMessageSchema);
+        const result = await sendPrivateMessage(
+          parsedMessage,
+          client,
+          userConnections
+        );
+        buildSuccessResponse(ws, result, PRIVATE_MESSAGE);
+      } catch (error) {
+        buildErrorResponse(ws, error, PRIVATE_MESSAGE);
+      }
+
+      break;
+
     default:
       throw { message: "There is no such type" };
   }

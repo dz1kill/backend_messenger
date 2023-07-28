@@ -39,13 +39,28 @@ export type ParramMessageGroup = {
   content: string;
 };
 
+export type ParramPrivateMessage = {
+  receiverId: number;
+  content: string;
+};
+
+type ParramsResData = Message[];
+
 export type ParamsType = ParramListLastMessage &
   ParramLastMessagesDialog &
   ParramLastMessagesGroup &
   ParramNewGroup &
   ParramAddUserInGroup &
-  ParramMessageGroup;
+  ParramMessageGroup &
+  ParramPrivateMessage;
 
-export type ParamsbuildSuccessResponse = {
-  messages: string | Message[];
+export type ParramsResultSuccessResponse = {
+  data: ParramsResData | null;
+  message: string | null;
+};
+
+export type ParamsBuildSuccessResponse = {
+  type: string;
+  success: true;
+  result: ParramsResultSuccessResponse;
 };

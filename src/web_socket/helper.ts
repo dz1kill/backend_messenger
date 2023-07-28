@@ -1,5 +1,10 @@
 import { ZodTypeAny, z } from "zod";
-import { ParamsType, ParamsbuildSuccessResponse, ReqMessageDTO } from "./types";
+import {
+  ParamsType,
+  ParamsBuildSuccessResponse,
+  ReqMessageDTO,
+  ParramsResultSuccessResponse,
+} from "./types";
 import { UserGroup } from "../models/group_user";
 import WebSocket from "ws";
 
@@ -59,6 +64,14 @@ export const MessageInGroupSchema = z.object({
   }),
 });
 
+export const privateMessageSchema = z.object({
+  type: z.string(),
+  params: z.object({
+    receiverId: z.number(),
+    content: z.string(),
+  }),
+});
+
 export const parseBufferToJson = (rawMessageBuff: Buffer) => {
   const rawMessage = rawMessageBuff.toString();
   return JSON.parse(rawMessage);
@@ -97,14 +110,17 @@ export const buildErrorResponse = (
 
 export const buildSuccessResponse = (
   ws: WebSocket,
-  result: ParamsbuildSuccessResponse,
-  scope: string
+  result: ParramsResultSuccessResponse,
+  type: string
 ) => {
   ws.send(
     JSON.stringify({
+      type,
       success: true,
-      scope,
-      data: result.messages,
+      params: {
+        data: result.data,
+        message: result.message,
+      },
     })
   );
 };

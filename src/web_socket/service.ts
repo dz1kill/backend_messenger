@@ -2,7 +2,6 @@ import { JwtPayload } from "jsonwebtoken";
 import sequelize from "../models";
 import { Message } from "../models/message";
 import {
-  ParamsbuildSuccessResponse,
   ParramAddUserInGroup,
   ParramLastMessagesDialog,
   ParramLastMessagesGroup,
@@ -10,6 +9,8 @@ import {
   ParramListLastMessage,
   ParramMessageGroup,
   ParramNewGroup,
+  ParramPrivateMessage,
+  ParramsResultSuccessResponse,
   ReqMessageDTO,
 } from "./types";
 import { UserGroup } from "../models/group_user";
@@ -21,7 +22,12 @@ import {
   transformArrUserGroup,
 } from "./helper";
 import { Transaction } from "sequelize";
-import { ADD_USER_IN_GROUP, LEAVE_GROUP, MESSAGE_IN_GROUP } from "./constants";
+import {
+  ADD_USER_IN_GROUP,
+  LEAVE_GROUP,
+  MESSAGE_IN_GROUP,
+  PRIVATE_MESSAGE,
+} from "./constants";
 
 const checkUserGroup = async (userId: number, groupId: number) => {
   const result = await sequelize.query(
@@ -45,13 +51,17 @@ RETURNING id;
     { raw: true, nest: true, model: Group, transaction: trx }
   );
 
-const insertUserGroup = async (groupId: number, userId: number) =>
+const insertUserGroup = async (
+  groupId: number,
+  userId: number,
+  trx: Transaction
+) =>
   await sequelize.query(
     `
   INSERT INTO users_groups (group_id, user_id)
   VALUES (${groupId}, ${userId})
  `,
-    { model: UserGroup }
+    { model: UserGroup, transaction: trx }
   );
 
 const selectUsersGroup = async (groupId: number) =>
@@ -68,7 +78,7 @@ const sendingMessages = (
   recipientIds: number[],
   userConnections: Map<JwtPayload, WebSocket>,
   senderId: number,
-  data: ParamsbuildSuccessResponse,
+  data: ParramsResultSuccessResponse,
   scope: string
 ) => {
   recipientIds.forEach((userInGroup) => {
@@ -169,6 +179,22 @@ const insertMessageGroup = async (
   );
 };
 
+const insertPrivateMessage = async (
+  senderId: number,
+  receiverId: number,
+  content: string
+) => {
+  await sequelize.query(
+    `
+  
+  INSERT INTO messages (sender_id, receiver_id, group_id, content,  created_at, updated_at, deleted_at )
+  VALUES (${senderId}, ${receiverId}, NULL, '${content}' ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+
+  `,
+    { model: Message }
+  );
+};
+
 export const listLastMessage = async (
   parseMessage: ReqMessageDTO<ParramListLastMessage>,
   client: JwtPayload
@@ -179,7 +205,7 @@ export const listLastMessage = async (
   const offset = calcOffset(page, limit);
   const result = await getDblistLastMessage(id, limit, offset);
 
-  return { messages: result };
+  return { data: result, message: null };
 };
 
 export const latestMessageDialog = async (
@@ -191,7 +217,7 @@ export const latestMessageDialog = async (
   const offset = calcOffset(page, limit);
   const result = await getDblatestMessageDialog(id, receiverId, limit, offset);
 
-  return { messages: result };
+  return { data: result, message: null };
 };
 
 export const latestMessageGroup = async (
@@ -205,7 +231,7 @@ export const latestMessageGroup = async (
   await checkUserGroup(id, groupId);
   const result = await getDblatestMessageGroup(groupId, limit, offset);
 
-  return { messages: result };
+  return { data: result, message: null };
 };
 
 export const newGroup = async (
@@ -218,10 +244,10 @@ export const newGroup = async (
   await sequelize.transaction(async (trx) => {
     const group = await insertGroup(groupName, trx);
     const groupId = group[0].id;
-    await insertUserGroup(groupId, id);
+    await insertUserGroup(groupId, id, trx);
   });
 
-  return { messages: null };
+  return { data: null, message: null };
 };
 
 export const addUserInGroup = async (
@@ -231,15 +257,19 @@ export const addUserInGroup = async (
 ) => {
   const { id, email } = client;
   const { groupId, userId } = parsedMessage.params;
-  const data = { messages: `User #${email} added in group.` };
+  const data = { message: `User #${email} added in group.`, data: null };
 
   await checkUserGroup(id, groupId);
-  await insertUserGroup(groupId, userId);
+  await sequelize.transaction(async (trx) => {
+    await insertUserGroup(groupId, userId, trx);
+  });
+
   const usersInGroup = await selectUsersGroup(groupId);
   const userIds: number[] = transformArrUserGroup(usersInGroup);
+
   sendingMessages(userIds, userConnections, id, data, ADD_USER_IN_GROUP);
 
-  return { messages: null };
+  return { data: null, message: null };
 };
 
 export const leaveGroup = async (
@@ -249,18 +279,17 @@ export const leaveGroup = async (
 ) => {
   const { id, email } = client;
   const { groupId } = parsedMessage.params;
-  const data = { messages: `User ${email} has left the group.` };
+  const data = { message: `User ${email} has left the group.`, data: null };
 
   await checkUserGroup(id, groupId);
   await dropUserGroup(id, groupId);
-  const usersInGroup = await selectUsersGroup(groupId);
 
+  const usersInGroup = await selectUsersGroup(groupId);
   const userIds: number[] = transformArrUserGroup(usersInGroup);
+
   sendingMessages(userIds, userConnections, id, data, LEAVE_GROUP);
 
-  return {
-    messages: null,
-  };
+  return { data: null, message: null };
 };
 
 export const sendMessageGroup = async (
@@ -270,12 +299,31 @@ export const sendMessageGroup = async (
 ) => {
   const { id } = client;
   const { groupId, content } = parsedMessage.params;
-  const data = { messages: content };
+  const data = { message: content, data: null };
 
   await checkUserGroup(id, groupId);
   insertMessageGroup(id, groupId, content);
+
   const usersInGroup = await selectUsersGroup(groupId);
   const userIds: number[] = transformArrUserGroup(usersInGroup);
+
   sendingMessages(userIds, userConnections, id, data, MESSAGE_IN_GROUP);
-  return { messages: null };
+
+  return { data: null, message: null };
+};
+
+export const sendPrivateMessage = async (
+  parsedMessage: ReqMessageDTO<ParramPrivateMessage>,
+  client: JwtPayload,
+  userConnections: Map<JwtPayload, WebSocket>
+) => {
+  const { id } = client;
+  const { receiverId, content } = parsedMessage.params;
+  const receiverIdArr = [receiverId];
+  const data = { message: content, data: null };
+
+  await insertPrivateMessage(id, receiverId, content);
+  sendingMessages(receiverIdArr, userConnections, id, data, PRIVATE_MESSAGE);
+
+  return { data: null, message: null };
 };

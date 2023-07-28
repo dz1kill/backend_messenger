@@ -58,3 +58,13 @@
     "content": "lol"
   }
 }
+
+// личное сообщение  
+
+{
+  "type": "privateMessage",
+  "params": {
+  "receiverId": 2, 
+  "content":"Hi"
+  }
+}
