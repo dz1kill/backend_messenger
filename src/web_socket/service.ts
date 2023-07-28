@@ -98,10 +98,12 @@ const getDblatestMessageDialog = async (
 ) =>
   await sequelize.query(
     `
-  SELECT sender_id, receiver_id, messages.created_at , content, images.name, images.url
+  SELECT sender_id, receiver_id,users.first_name as "receverName", content,  messages.created_at 
   FROM messages
-  INNER JOIN images
-  ON messages.id = images.message_id
+
+  INNER JOIN images ON messages.id = images.message_id
+  LEFT JOIN users ON messages.receiver_id = users.id
+
   WHERE sender_id = ${senderId} AND receiver_id = ${receiverId}
        OR sender_id = ${receiverId} AND receiver_id = ${senderId}  
   LIMIT ${limit} 
@@ -115,24 +117,32 @@ const getDblistLastMessage = async (
   offset: number
 ) =>
   await sequelize.query(
-    `
- WITH numbered_messages AS (
-    SELECT id, sender_id, receiver_id, group_id, content, created_at, updated_at , deleted_at,
-           ROW_NUMBER() OVER(PARTITION BY sender_id, receiver_id, group_id ORDER BY created_at DESC) AS r_number
-    FROM messages
-    WHERE sender_id = ${userId} OR receiver_id = ${userId} OR group_id IN (
-      SELECT group_id
-      FROM users_groups
-      WHERE user_id = ${userId}
-    )
+    `WITH numbered_messages AS (
+      SELECT messages.id, sender_id, receiver_id, group_id, content, messages.created_at, messages.updated_at , messages.deleted_at,
+             ROW_NUMBER() OVER(PARTITION BY sender_id, receiver_id, group_id ORDER BY messages.created_at DESC) AS r_number,
+             groups.name as "groupName", users.first_name as "senderName",
+             receivers.first_name as "receiverName"
+      FROM messages   
+      
+      LEFT JOIN groups ON messages.group_id = groups.id
+      LEFT JOIN users ON messages.sender_id = users.id
+      LEFT JOIN users AS receivers ON messages.receiver_id = receivers.id
+  
+      WHERE sender_id = ${userId} OR receiver_id = ${userId} OR group_id IN (
+        SELECT group_id
+        FROM users_groups
+        WHERE user_id = ${userId}
+      )
   )
-  SELECT id, sender_id as "senderId", receiver_id as "receiverId", group_id as "groupId", content,
-   created_at as "createdAt", updated_at as "updatedAt" , deleted_at as "deletedAt"
+  SELECT id, sender_id as "senderId", "senderName", receiver_id as "receiverId", "receiverName", group_id as "groupId", "groupName", content,
+     created_at as "createdAt", updated_at as "updatedAt" , deleted_at as "deletedAt"
+     
   FROM numbered_messages
   WHERE r_number = 1
   ORDER BY created_at DESC
   LIMIT ${limit} 
-  OFFSET ${offset}`,
+  OFFSET ${offset}
+`,
     { raw: true, nest: true, model: Message }
   );
 
@@ -143,13 +153,16 @@ const getDblatestMessageGroup = async (
 ) =>
   await sequelize.query(
     `
-  SELECT sender_id, group_id, messages.created_at , content, images.name, images.url
-  FROM messages
-  INNER JOIN images
-  ON messages.id = images.message_id
-  WHERE group_id = ${groupId}
-  LIMIT ${limit}
-  OFFSET ${offset}   
+    SELECT sender_id, users.first_name as "senderName", group_id, messages.created_at , content
+    FROM messages
+  
+    LEFT JOIN users ON messages.sender_id = users.id
+    INNER JOIN images ON messages.id = images.message_id
+  
+    WHERE group_id = ${groupId}
+    LIMIT ${limit}
+    OFFSET ${offset}   
+    
 `,
     { raw: true, nest: true, model: Message }
   );
