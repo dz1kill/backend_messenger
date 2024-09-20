@@ -27,7 +27,7 @@ Stack: Node.js, Express, WS, PostgreSQL, Sequelize-typescript, JWT.
 example of invalid token error:
 
 ```js
-Error: Unexpected server response: 401
+Error: Unexpected server response: 401.
 Handshake Details
 Request URL: http://localhost:3000/
 Request Method: GET
