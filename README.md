@@ -358,6 +358,6 @@ $ npm run dev
 
 Documentation (Swagger UI) is available at: [link] http://localhost:3000/api/
 
-Websocket server: ws://localhost:3000
+Websocket server: ws://localhost:3000/
 
 node v16.14.2
