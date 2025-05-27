@@ -5,7 +5,10 @@ const {
   NUMBER_OF_MESSAGES,
   NUMBER_OF_IMAGES,
 } = require("./helper/constants.js");
-const { getRandomIntInclusive, hashPassword } = require("./helper/common.js");
+const {
+  getRandomIntInclusive,
+  hashPassword,
+} = require("./helper/common.js");
 
 const createUser = async (queryInterface) => {
   const max = NUMBER_OF_USERS;
@@ -19,7 +22,7 @@ const createUser = async (queryInterface) => {
     const user = {
       first_name: `Patrick${userData}`,
       last_name: `Gos${userData}`,
-      email: `email@mail.com${userData}`,
+      email: `email${userData}@mail.com`,
       password: resultHash,
       created_at: new Date(),
       updated_at: new Date(),
@@ -90,7 +93,10 @@ const createUsersGroups = async (queryInterface) => {
 
   while (counter < max) {
     const randomUserId = getRandomIntInclusive(minUserId, maxUserId);
-    const randomGroupId = getRandomIntInclusive(minGroupId, maxGroupId);
+    const randomGroupId = getRandomIntInclusive(
+      minGroupId,
+      maxGroupId
+    );
     try {
       await queryInterface.insert(null, "users_groups", {
         user_id: randomUserId,
@@ -132,7 +138,10 @@ const createMessages = async (queryInterface) => {
     };
 
     if (createPrivate) {
-      message.receiver_id = getRandomIntInclusive(minUserId, maxUserId);
+      message.receiver_id = getRandomIntInclusive(
+        minUserId,
+        maxUserId
+      );
     } else {
       const userGroup = await queryInterface.sequelize.query(
         `SELECT group_id 
@@ -141,7 +150,10 @@ const createMessages = async (queryInterface) => {
         { raw: true, nest: true }
       );
       if (userGroup.length === 0) {
-        message.receiver_id = getRandomIntInclusive(minUserId, maxUserId);
+        message.receiver_id = getRandomIntInclusive(
+          minUserId,
+          maxUserId
+        );
       } else {
         const rand = Math.floor(Math.random() * userGroup.length);
         message.group_id = userGroup[rand].group_id;
@@ -176,7 +188,10 @@ const createImages = async (queryInterface) => {
   let counter = 0;
 
   while (counter < max) {
-    const randomMessageId = getRandomIntInclusive(minMessageId, maxMessageId);
+    const randomMessageId = getRandomIntInclusive(
+      minMessageId,
+      maxMessageId
+    );
 
     const image = {
       message_id: randomMessageId,
