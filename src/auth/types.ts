@@ -2,7 +2,7 @@ export type RegistrationDTO = {
   body: {
     firstName: string;
     lastName: string;
-    userEmail: string;
+    email: string;
     password: string;
   };
 };

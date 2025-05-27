@@ -7,16 +7,18 @@ export async function registration(
   res: express.Response
 ) {
   try {
-    const { userEmail, firstName, lastName, password } = req.body;
+    const { email, firstName, lastName, password } = req.body;
     const result = await registrationUser(
-      userEmail,
+      email,
       firstName,
       lastName,
       password
     );
     res.status(result.statusCode || 200).json(result.message);
   } catch (error) {
-    res.status(error.statusCode || 500).json(error.message || "Server error");
+    res
+      .status(error.statusCode || 500)
+      .json(error.message || "Server error");
   }
 }
 
@@ -31,6 +33,8 @@ export async function authorization(
       .status(result.statusCode || 200)
       .json({ message: result.message, token: result.token });
   } catch (error) {
-    res.status(error.statusCode || 500).json(error.message || "Server error");
+    res
+      .status(error.statusCode || 500)
+      .json(error.message || "Server error");
   }
 }

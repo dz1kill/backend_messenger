@@ -129,7 +129,8 @@ components:
       additionalProperties: false
       required:
         - password
-        - userEmail
+        - email
+        - firstName
       properties:
         firstName:
           type: string
@@ -139,7 +140,7 @@ components:
           type: string
           description: User last name
           example: Stell
-        userEmail:
+        email:
           type: string
           description: User email
           example: admin@example.com
