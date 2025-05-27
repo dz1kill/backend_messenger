@@ -6,7 +6,10 @@ import { User } from "../models/user";
 export async function checkUniqueEmail(email: string) {
   const findUser = await User.findOne({ where: { email } });
   if (findUser) {
-    throw { message: "User with this email already exists!", statusCode: 400 };
+    throw {
+      message: "User with this email already exists!",
+      statusCode: 409,
+    };
   }
 }
 
@@ -16,7 +19,10 @@ export async function hashPassword(passwordUser: string) {
 
 export function checkUser(findUser: User) {
   if (!findUser) {
-    throw { message: "No such user exists or wrong password", statusCode: 404 };
+    throw {
+      message: "No such user exists or wrong password",
+      statusCode: 404,
+    };
   }
 }
 
@@ -24,13 +30,23 @@ export async function checkPasswordUser(
   passwordReq: string,
   passwordSaveInDB: string
 ) {
-  const resultParse = await bcrypt.compare(passwordReq, passwordSaveInDB);
+  const resultParse = await bcrypt.compare(
+    passwordReq,
+    passwordSaveInDB
+  );
   if (!resultParse) {
-    throw { message: "No such user exists or wrong password", statusCode: 404 };
+    throw {
+      message: "No such user exists or wrong password",
+      statusCode: 404,
+    };
   }
 }
 
-export function generateJwt(id: number, email: string, firstName: string) {
+export function generateJwt(
+  id: number,
+  email: string,
+  firstName: string
+) {
   return jwt.sign({ id, email, firstName }, config.get("JWT.key"), {
     expiresIn: "24h",
   });
