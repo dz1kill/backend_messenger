@@ -1,8 +1,0 @@
-{
-  "DBconfig": {
-    "password": "123"
-  },
-  "JWT": {
-    "key": "hello"
-  }
-}
