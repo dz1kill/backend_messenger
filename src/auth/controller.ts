@@ -8,17 +8,12 @@ export async function registration(
 ) {
   try {
     const { email, firstName, lastName, password } = req.body;
-    const result = await registrationUser(
-      email,
-      firstName,
-      lastName,
-      password
-    );
-    res.status(result.statusCode || 200).json(result.message);
+    const result = await registrationUser(email, firstName, lastName, password);
+    res.status(result.statusCode || 200).json({ message: result.message });
   } catch (error) {
     res
       .status(error.statusCode || 500)
-      .json(error.message || "Server error");
+      .json({ message: error.message || "Server error" });
   }
 }
 
@@ -35,6 +30,6 @@ export async function authorization(
   } catch (error) {
     res
       .status(error.statusCode || 500)
-      .json(error.message || "Server error");
+      .json({ message: error.message || "Server error" });
   }
 }

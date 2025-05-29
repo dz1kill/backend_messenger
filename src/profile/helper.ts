@@ -7,7 +7,7 @@ export async function checkPasswordUser(
 ) {
   const resultParse = await bcrypt.compare(passwordReq, passwordSaveInDB);
   if (!resultParse) {
-    throw { message: "Wrong password", statusCode: 400 };
+    throw { message: "Wrong password or email", statusCode: 400 };
   }
 }
 

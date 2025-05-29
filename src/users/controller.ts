@@ -6,6 +6,8 @@ export async function findAllUser(req, res: express.Response) {
     const result = await User.findAll();
     res.status(200).json(result);
   } catch (error) {
-    res.status(error.statusCode || 500).json(error.message || "Server error");
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Server error" });
   }
 }

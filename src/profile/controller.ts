@@ -7,9 +7,11 @@ export async function updateUser(req: UpdateUserDTO, res) {
     const { id } = req.user;
     const { email, firstName, lastName } = req.body;
     const result = await updateUserData(id, email, firstName, lastName);
-    res.status(result.statusCode || 200).json(result.message);
+    res.status(result.statusCode || 200).json({ message: result.message });
   } catch (error) {
-    res.status(error.statusCode || 500).json(error.message || "Server error");
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Server error" });
   }
 }
 
@@ -23,9 +25,11 @@ export async function updatePassword(req: UpdatePasswordDTO, res) {
       repeatNewPassword,
       id
     );
-    res.status(result.statusCode || 200).json(result.message);
+    res.status(result.statusCode || 200).json({ message: result.message });
   } catch (error) {
-    res.status(error.statusCode || 500).json(error.message || "Server error");
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Server error" });
   }
 }
 
@@ -36,6 +40,8 @@ export async function dropUser(req: DropUserDto, res) {
     await user.destroy();
     res.status(200).json({ message: "User deleted successfully." });
   } catch (error) {
-    res.status(error.statusCode || 500).json(error.message || "Server error");
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Server error" });
   }
 }
