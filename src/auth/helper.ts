@@ -21,7 +21,7 @@ export function checkUser(findUser: User) {
   if (!findUser) {
     throw {
       message: "No such user exists or wrong password",
-      statusCode: 404,
+      statusCode: 400,
     };
   }
 }
@@ -37,7 +37,7 @@ export async function checkPasswordUser(
   if (!resultParse) {
     throw {
       message: "No such user exists or wrong password",
-      statusCode: 404,
+      statusCode: 400,
     };
   }
 }

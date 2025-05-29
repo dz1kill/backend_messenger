@@ -21,7 +21,7 @@ paths:
       responses:
         201:
           description: Token created.
-        404:
+        400:
           description: No such user exists or wrong password.
         500:
           description: Server error.
@@ -134,18 +134,22 @@ components:
       properties:
         firstName:
           type: string
+          pattern: "^\\S+$"
           description: User first name
           example: Don
         lastName:
           type: string
+          pattern: '^\S*$'
           description: User last name
           example: Stell
         email:
           type: string
+          pattern: "^\\S+$"
           description: User email
           example: admin@example.com
         password:
           type: string
+          pattern: "^\\S+$"
           description: User password
           example: "1234"
 
@@ -171,14 +175,17 @@ components:
       properties:
         firstName:
           type: string
+          pattern: "^\\S+$"
           description: User first name.
           example: Derek
         lastName:
           type: string
+          pattern: "^\\S+$"
           description: User last name.
           example: Jordan
         email:
           type: string
+          pattern: "^\\S+$"
           description: New user email.
           example: pete7833@examples.com
 
@@ -192,13 +199,16 @@ components:
       properties:
         oldPassword:
           type: string
+          pattern: "^\\S+$"
           description: Old user password
           example: "1234"
         newPassword:
           type: string
+          pattern: "^\\S+$"
           description: New user password
           example: "12345"
         repeatNewPassword:
           type: string
+          pattern: "^\\S+$"
           description: Repeat new user password
           example: "12345"
