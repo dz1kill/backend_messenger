@@ -28,9 +28,9 @@ export const authMiddlewareWs = (
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit("connection", ws, request, data);
     });
-  } catch (e) {
-    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
-    socket.destroy();
-    return;
+  } catch (err) {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      ws.close(4001, `${err.message}`);
+    });
   }
 };
