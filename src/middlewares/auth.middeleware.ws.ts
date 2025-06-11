@@ -30,7 +30,7 @@ export const authMiddlewareWs = (
     });
   } catch (err) {
     wss.handleUpgrade(request, socket, head, (ws) => {
-      ws.close(4001, `${err.message}`);
+      ws.close(4001, `Unauthorized`);
     });
   }
 };
