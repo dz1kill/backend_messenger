@@ -1,354 +1,187 @@
-const { getRandomIntInclusive, hashPassword } = require("./helper/common.js");
+const { hashPassword, getRandomIntInclusive } = require("./helper/common.js");
 
-const NUMBER_OF_USERS = 40;
-const NUMBER_OF_GROUPS = 20;
-const NUMBER_OF_MESSAGES_PER_CHAT = { min: 40, max: 80 };
-const NUMBER_OF_IMAGES_PER_USER = { min: 3, max: 10 };
-const THREE_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const NUMBER_OF_USERS = 20;
+const NUMBER_OF_GROUPS = 30;
+const MESSAGE_MIN = 10;
+const MESSAGE_MAX = 20;
+const GROUPS_PER_USER_MIN = 7;
+const GROUPS_PER_USER_MAX = 14;
+const MESSAGE_TEMPLATES = [
+  "Hey, how's it going?",
+  "Did you see the update?",
+  "Let's meet up tomorrow.",
+  "I'll send the file soon.",
+  "Can we talk about the project?",
+  "Nice work on the last task!",
+  "Are we still on for tonight?",
+  "Check this out!",
+  "Thanks for the quick response.",
+  "Got it, thanks!",
+  "What time is the meeting?",
+  "That's awesome!",
+  "Talk to you later.",
+  "No worries, take your time.",
+  "I totally agree with you.",
+];
 
-const FIRST_NAMES = [
-  "Alex",
-  "Anna",
-  "Max",
-  "Sophia",
-  "Daniel",
-  "Olivia",
-  "Michael",
-  "Emma",
-  "David",
-  "Emily",
-  "James",
-  "Charlotte",
-  "Robert",
-  "Amelia",
-  "John",
-  "Mia",
-  "William",
-  "Harper",
-  "Richard",
-  "Evelyn",
-  "Joseph",
-  "Abigail",
-  "Thomas",
-  "Elizabeth",
-  "Charles",
-  "Sofia",
-  "Christopher",
-  "Avery",
-  "Matthew",
-  "Ella",
-];
-const LAST_NAMES = [
-  "Smith",
-  "Johnson",
-  "Williams",
-  "Brown",
-  "Jones",
-  "Garcia",
-  "Miller",
-  "Davis",
-  "Rodriguez",
-  "Martinez",
-  "Hernandez",
-  "Lopez",
-  "Gonzalez",
-  "Wilson",
-  "Anderson",
-  "Thomas",
-  "Taylor",
-  "Moore",
-  "Jackson",
-  "Martin",
-];
-const GROUP_NAMES = [
-  "Work Team",
-  "Family Chat",
-  "College Friends",
-  "Book Club",
-  "Gaming Squad",
-  "Travel Buddies",
-  "Music Lovers",
-  "Fitness Group",
-  "Foodies United",
-  "Tech Enthusiasts",
-  "Art Collective",
-  "Study Group",
-  "Neighborhood Watch",
-  "Parents Association",
-  "Sports Fans",
+const groupNames = [
+  "Tech Geeks",
   "Movie Buffs",
+  "Wanderlust",
+  "Bookworms United",
+  "Fitness Freaks",
+  "Startup Founders",
+  "Gamers Arena",
+  "Food Lovers",
+  "Crypto Crew",
+  "Music Makers",
   "Photography Club",
-  "Entrepreneurs Network",
-  "Language Exchange",
-  "Volunteer Team",
-];
-const MESSAGE_TEXTS = [
-  "Hey, how are you doing?",
-  "What's up?",
-  "Did you see the news?",
-  "Let's meet this weekend!",
-  "I'll be late for the meeting",
-  "Check out this link",
-  "Can you help me with something?",
-  "Thanks for your help!",
-  "Happy birthday!",
-  "Did you finish the project?",
-  "What are your plans for today?",
-  "I'm running about 10 minutes late",
-  "Let me know when you're free",
-  "That sounds great!",
-  "I don't think that will work",
-  "Can we reschedule?",
-  "Have you seen my keys?",
-  "What time should we meet?",
-  "Bring your laptop tomorrow",
-  "The meeting is cancelled",
+  "History Nerds",
+  "Science Squad",
+  "Pet Owners",
+  "Eco Warriors",
+  "Coffee Addicts",
+  "Minimalist Life",
+  "Design Hub",
+  "Developers Den",
+  "Investors Circle",
+  "Language Learners",
+  "Poetry Lounge",
+  "Fantasy Fans",
+  "Meme Factory",
+  "Yoga Retreat",
+  "Travel Junkies",
+  "Anime World",
+  "Parents Group",
+  "Remote Workers",
+  "Board Games Club",
 ];
 
-const createUser = async (queryInterface) => {
-  const users = [];
+const userNames = [
+  ["Alice", "Johnson"],
+  ["Bob", "Smith"],
+  ["Charlie", "Brown"],
+  ["Diana", "Miller"],
+  ["Ethan", "Davis"],
+  ["Fiona", "Wilson"],
+  ["George", "Taylor"],
+  ["Hannah", "Moore"],
+  ["Ian", "Anderson"],
+  ["Julia", "Thomas"],
+  ["Kevin", "Jackson"],
+  ["Laura", "White"],
+  ["Mike", "Harris"],
+  ["Nina", "Martin"],
+  ["Oscar", "Lee"],
+  ["Paula", "Clark"],
+  ["Quentin", "Lewis"],
+  ["Rachel", "Walker"],
+  ["Steve", "Young"],
+  ["Tina", "Hall"],
+];
 
-  for (let i = 0; i < NUMBER_OF_USERS; i++) {
-    const firstName =
-      FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
-    const lastName = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
-    const resultHash = await hashPassword("1234");
-
-    const user = {
-      first_name: firstName,
-      last_name: lastName,
-      email: `email${i}@mail.com`,
-      password: resultHash,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-    users.push(user);
-  }
-
-  await queryInterface.bulkInsert("users", users);
+const getRandomMessage = () => {
+  return MESSAGE_TEMPLATES[
+    Math.floor(Math.random() * MESSAGE_TEMPLATES.length)
+  ];
 };
 
-const deleteUsers = async (queryInterface) => {
-  await queryInterface.sequelize.query("DELETE FROM users");
-};
-
-const createGroups = async (queryInterface) => {
-  const groups = [];
-
-  for (let i = 0; i < NUMBER_OF_GROUPS; i++) {
-    const groupName =
-      GROUP_NAMES[i % GROUP_NAMES.length] +
-      (i > GROUP_NAMES.length
-        ? ` ${Math.floor(i / GROUP_NAMES.length) + 1}`
-        : "");
-
-    const group = {
-      name: groupName,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-
-    groups.push(group);
-  }
-
-  await queryInterface.bulkInsert("groups", groups);
-};
-
-const deleteGroups = async (queryInterface) => {
-  await queryInterface.sequelize.query("DELETE FROM groups");
-};
-
-const createUsersGroups = async (queryInterface) => {
-  const users = (
-    await queryInterface.sequelize.query("SELECT id FROM users", {
-      type: queryInterface.sequelize.QueryTypes.SELECT,
-    })
-  ).map((u) => u.id);
-  const groups = (
-    await queryInterface.sequelize.query("SELECT id FROM groups", {
-      type: queryInterface.sequelize.QueryTypes.SELECT,
-    })
-  ).map((g) => g.id);
-
-  for (const groupId of groups) {
-    const numMembers = getRandomIntInclusive(5, 15);
-    const shuffledUsers = [...users].sort(() => 0.5 - Math.random());
-    const selectedUsers = shuffledUsers.slice(0, numMembers);
-
-    for (const userId of selectedUsers) {
-      try {
-        await queryInterface.insert(null, "users_groups", {
-          user_id: userId,
-          group_id: groupId,
-          created_at: new Date(),
-          updated_at: new Date(),
-        });
-      } catch (e) {
-        continue;
-      }
-    }
-  }
-
-  const additionalConnections = Math.floor(users.length * 5);
-  for (let i = 0; i < additionalConnections; i++) {
-    const randomUserId = users[getRandomIntInclusive(0, users.length - 1)];
-    const randomGroupId = groups[getRandomIntInclusive(0, groups.length - 1)];
-
-    try {
-      await queryInterface.insert(null, "users_groups", {
-        user_id: randomUserId,
-        group_id: randomGroupId,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-    } catch (e) {
-      continue;
-    }
-  }
-};
-
-const deleteUsersGroups = async (queryInterface) => {
-  await queryInterface.sequelize.query("DELETE FROM users_groups");
-};
-
-const createMessages = async (queryInterface) => {
+const getRandomDateWithinLast5Days = () => {
   const now = new Date();
-  const users = (
-    await queryInterface.sequelize.query("SELECT id FROM users", {
-      type: queryInterface.sequelize.QueryTypes.SELECT,
-    })
-  ).map((u) => u.id);
-  const groups = (
-    await queryInterface.sequelize.query("SELECT id FROM groups", {
-      type: queryInterface.sequelize.QueryTypes.SELECT,
-    })
-  ).map((g) => g.id);
-
-  for (let i = 0; i < users.length; i++) {
-    const senderId = users[i];
-    const numContacts = getRandomIntInclusive(5, 15);
-    const shuffledUsers = [...users]
-      .filter((id) => id !== senderId)
-      .sort(() => 0.5 - Math.random());
-    const contacts = shuffledUsers.slice(0, numContacts);
-
-    for (const receiverId of contacts) {
-      const numMessages = getRandomIntInclusive(
-        NUMBER_OF_MESSAGES_PER_CHAT.min,
-        NUMBER_OF_MESSAGES_PER_CHAT.max
-      );
-
-      for (let j = 0; j < numMessages; j++) {
-        const isSender = Math.random() > 0.5;
-        const currentSender = isSender ? senderId : receiverId;
-        const currentReceiver = isSender ? receiverId : senderId;
-        const randomTimeOffset = Math.floor(Math.random() * THREE_DAYS_MS);
-        const messageTime = new Date(now.getTime() - randomTimeOffset);
-
-        const message = {
-          sender_id: currentSender,
-          receiver_id: currentReceiver,
-          content:
-            MESSAGE_TEXTS[Math.floor(Math.random() * MESSAGE_TEXTS.length)],
-          created_at: messageTime,
-          updated_at: messageTime,
-        };
-
-        await queryInterface.insert(null, "messages", message);
-      }
-    }
-  }
-
-  for (const groupId of groups) {
-    const groupMembers = (
-      await queryInterface.sequelize.query(
-        `SELECT user_id FROM users_groups WHERE group_id = ${groupId}`,
-        { type: queryInterface.sequelize.QueryTypes.SELECT }
-      )
-    ).map((m) => m.user_id);
-
-    if (groupMembers.length === 0) continue;
-
-    const numMessages = getRandomIntInclusive(
-      NUMBER_OF_MESSAGES_PER_CHAT.min * 2,
-      NUMBER_OF_MESSAGES_PER_CHAT.max * 2
-    );
-
-    for (let i = 0; i < numMessages; i++) {
-      const randomMember =
-        groupMembers[getRandomIntInclusive(0, groupMembers.length - 1)];
-      const randomTimeOffset = Math.floor(Math.random() * THREE_DAYS_MS);
-      const messageTime = new Date(now.getTime() - randomTimeOffset);
-
-      const message = {
-        sender_id: randomMember,
-        group_id: groupId,
-        content:
-          MESSAGE_TEXTS[Math.floor(Math.random() * MESSAGE_TEXTS.length)],
-        created_at: messageTime,
-        updated_at: messageTime,
-      };
-
-      await queryInterface.insert(null, "messages", message);
-    }
-  }
-};
-
-const deleteMessages = async (queryInterface) => {
-  await queryInterface.sequelize.query("DELETE FROM messages");
-};
-
-const createImages = async (queryInterface) => {
-  const now = new Date();
-  const messages = await queryInterface.sequelize.query(
-    "SELECT id, sender_id FROM messages ORDER BY RANDOM() LIMIT 1000",
-    { type: queryInterface.sequelize.QueryTypes.SELECT }
+  const past = new Date(now);
+  past.setDate(past.getDate() - 5);
+  return new Date(
+    past.getTime() + Math.random() * (now.getTime() - past.getTime())
   );
-
-  for (const message of messages) {
-    const numImages = getRandomIntInclusive(1, 3);
-
-    for (let i = 0; i < numImages; i++) {
-      const imageTypes = ["jpg", "png", "gif"];
-      const randomType =
-        imageTypes[Math.floor(Math.random() * imageTypes.length)];
-      const randomTimeOffset = Math.floor(Math.random() * ONE_WEEK_MS);
-      const imageTime = new Date(now.getTime() - randomTimeOffset);
-
-      const image = {
-        message_id: message.id,
-        name: `image_${message.sender_id}_${Date.now()}.${randomType}`,
-        url: `https://example.com/images/${message.sender_id}/${Math.random()
-          .toString(36)
-          .substring(7)}.${randomType}`,
-        created_at: imageTime,
-        updated_at: imageTime,
-      };
-
-      await queryInterface.insert(null, "images", image);
-    }
-  }
-};
-
-const deleteImages = async (queryInterface) => {
-  await queryInterface.sequelize.query("DELETE FROM images");
 };
 
 module.exports = {
   async up(queryInterface) {
-    await createUser(queryInterface);
-    await createGroups(queryInterface);
-    await createUsersGroups(queryInterface);
-    await createMessages(queryInterface);
-    await createImages(queryInterface);
+    // USERS
+    const users = [];
+    for (let i = 0; i < NUMBER_OF_USERS; i++) {
+      const [first_name, last_name] = userNames[i];
+      const password = await hashPassword("1234");
+      users.push({
+        first_name,
+        last_name,
+        email: `email${i}@mail.com`,
+        password,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+    }
+    await queryInterface.bulkInsert("users", users);
+
+    // GROUPS
+    const groups = groupNames.map((name) => ({
+      name,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }));
+    await queryInterface.bulkInsert("groups", groups);
+
+    // Fetch created users & groups
+    const createdUsers = (
+      await queryInterface.sequelize.query("SELECT id FROM users")
+    )[0];
+    const createdGroups = (
+      await queryInterface.sequelize.query("SELECT id FROM groups")
+    )[0];
+
+    // USERS_GROUPS
+    const usersGroups = [];
+    for (const user of createdUsers) {
+      const groupCount = getRandomIntInclusive(
+        GROUPS_PER_USER_MIN,
+        GROUPS_PER_USER_MAX
+      );
+      const shuffledGroups = [...createdGroups].sort(() => 0.5 - Math.random());
+      for (let i = 0; i < groupCount; i++) {
+        usersGroups.push({ user_id: user.id, group_id: shuffledGroups[i].id });
+      }
+    }
+    await queryInterface.bulkInsert("users_groups", usersGroups);
+
+    // MESSAGES
+    const messages = [];
+    for (const user of createdUsers) {
+      const messageCount = getRandomIntInclusive(MESSAGE_MIN, MESSAGE_MAX);
+      for (let i = 0; i < messageCount; i++) {
+        const isPrivate = Math.random() < 0.5;
+        const message = {
+          sender_id: user.id,
+          content: getRandomMessage(),
+          created_at: getRandomDateWithinLast5Days(),
+          updated_at: new Date(),
+        };
+        if (isPrivate) {
+          let receiver;
+          do {
+            receiver =
+              createdUsers[Math.floor(Math.random() * createdUsers.length)].id;
+          } while (receiver === user.id);
+          message.receiver_id = receiver;
+        } else {
+          const userGroupIds = usersGroups
+            .filter((ug) => ug.user_id === user.id)
+            .map((ug) => ug.group_id);
+          if (userGroupIds.length > 0) {
+            message.group_id =
+              userGroupIds[Math.floor(Math.random() * userGroupIds.length)];
+          }
+        }
+        messages.push(message);
+      }
+    }
+    await queryInterface.bulkInsert("messages", messages);
   },
 
   async down(queryInterface) {
-    await deleteImages(queryInterface);
-    await deleteMessages(queryInterface);
-    await deleteUsersGroups(queryInterface);
-    await deleteGroups(queryInterface);
-    await deleteUsers(queryInterface);
+    await queryInterface.bulkDelete("images", null);
+    await queryInterface.bulkDelete("messages", null);
+    await queryInterface.bulkDelete("users_groups", null);
+    await queryInterface.bulkDelete("groups", null);
+    await queryInterface.bulkDelete("users", null);
   },
 };
