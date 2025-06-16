@@ -6,7 +6,7 @@ export type ReqMessageDTO<T> = {
 };
 export type ParramListLastMessage = {
   limit: number;
-  page: number;
+  cursorCreatedAt: string | null;
 };
 
 export type ParramLastMessagesDialog = {

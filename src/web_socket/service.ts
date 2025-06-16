@@ -114,85 +114,82 @@ const getDblatestMessageDialog = async (
 const getDblistLastMessage = async (
   userId: number,
   limit: number,
-  offset: number
+  cursorCreatedAt: string | null
 ) =>
   await sequelize.query(
     `WITH user_groups AS (
-  SELECT group_id 
-  FROM users_groups 
-  WHERE user_id = ${userId}
-),
+    SELECT group_id 
+    FROM users_groups 
+    WHERE user_id = ${userId}
+  ),
 
-last_messages AS (
+  last_messages AS (
+    SELECT 
+      messages.id,
+      messages.sender_id,
+      messages.receiver_id,
+      messages.group_id,
+      messages.content,
+      messages.created_at,
+      messages.updated_at,
+      messages.deleted_at,
+      users.first_name as "senderName",
+      receivers.first_name as "receiverName",
+      groups.name as "groupName",
+
+      CASE 
+        WHEN messages.group_id IS NOT NULL THEN 'group'
+        ELSE 'personal'
+      END AS "dialogType",
+
+      CASE 
+        WHEN messages.sender_id = ${userId} THEN receivers.first_name
+        WHEN messages.receiver_id = ${userId} THEN users.first_name
+        ELSE NULL
+      END AS "interlocutorName",
+
+      groups.name as "groupChatName",
+
+      ROW_NUMBER() OVER(
+        PARTITION BY 
+          CASE 
+            WHEN messages.group_id IS NULL THEN 
+              LEAST(messages.sender_id, messages.receiver_id) || '-' || 
+              GREATEST(messages.sender_id, messages.receiver_id)
+            ELSE messages.group_id::TEXT
+          END
+        ORDER BY messages.created_at DESC
+      ) AS r_number
+    FROM messages
+    LEFT JOIN users ON messages.sender_id = users.id
+    LEFT JOIN users AS receivers ON messages.receiver_id = receivers.id
+    LEFT JOIN groups ON messages.group_id = groups.id
+    WHERE 
+      (messages.group_id IS NULL AND (messages.sender_id = ${userId} OR messages.receiver_id = ${userId}))
+      OR
+      (messages.group_id IN (SELECT group_id FROM user_groups))
+  )
+
   SELECT 
-    messages.id,
-    messages.sender_id,
-    messages.receiver_id,
-    messages.group_id,
-    messages.content,
-    messages.created_at,
-    messages.updated_at,
-    messages.deleted_at,
-    users.first_name as "senderName",
-    receivers.first_name as "receiverName",
-    groups.name as "groupName",
-
-    CASE 
-      WHEN messages.group_id IS NOT NULL THEN 'group'
-      ELSE 'personal'
-    END AS "dialogType",
-
-    CASE 
-      WHEN messages.sender_id = ${userId} THEN receivers.first_name
-      WHEN messages.receiver_id = ${userId} THEN users.first_name
-      ELSE NULL
-    END AS "interlocutorName",
-
-    groups.name as "groupChatName",
-
-    ROW_NUMBER() OVER(
-      PARTITION BY 
-       
-        CASE 
-          WHEN messages.group_id IS NULL THEN 
-            LEAST(messages.sender_id, messages.receiver_id) || '-' || 
-            GREATEST(messages.sender_id, messages.receiver_id)
-          ELSE messages.group_id::TEXT
-        END
-      ORDER BY messages.created_at DESC
-    ) AS r_number
-  FROM messages
-  LEFT JOIN users ON messages.sender_id = users.id
-  LEFT JOIN users AS receivers ON messages.receiver_id = receivers.id
-  LEFT JOIN groups ON messages.group_id = groups.id
-  WHERE 
-
-    (messages.group_id IS NULL AND (messages.sender_id = ${userId} OR messages.receiver_id = ${userId}))
-    OR
-   
-    (messages.group_id IN (SELECT group_id FROM user_groups))
-)
-
-SELECT 
-  id,
-  sender_id as "senderId",
-  "senderName",
-  receiver_id as "receiverId",
-  "receiverName",
-  group_id as "groupId",
-  "groupName",
-  content,
-  created_at as "createdAt",
-  updated_at as "updatedAt",
-  deleted_at as "deletedAt",
-  "dialogType",
-  COALESCE("interlocutorName", "groupChatName") AS "chatName"
-FROM last_messages
-WHERE r_number = 1  
-ORDER BY "createdAt" DESC 
-LIMIT ${limit} 
-OFFSET ${offset}
-`,
+    id,
+    sender_id as "senderId",
+    "senderName",
+    receiver_id as "receiverId",
+    "receiverName",
+    group_id as "groupId",
+    "groupName",
+    content,
+    created_at as "createdAt",
+    updated_at as "updatedAt",
+    deleted_at as "deletedAt",
+    "dialogType",
+    COALESCE("interlocutorName", "groupChatName") AS "chatName"
+  FROM last_messages
+  WHERE r_number = 1
+    ${cursorCreatedAt ? `AND created_at < '${cursorCreatedAt}'` : ""}
+  ORDER BY "createdAt" DESC 
+  LIMIT ${limit};
+  `,
     { raw: true, nest: true, model: Message }
   );
 
@@ -263,10 +260,8 @@ export const listLastMessage = async (
   client: JwtPayload
 ) => {
   const { id } = client;
-  const { limit, page } = parseMessage.params;
-
-  const offset = calcOffset(page, limit);
-  const result = await getDblistLastMessage(id, limit, offset);
+  const { limit, cursorCreatedAt } = parseMessage.params;
+  const result = await getDblistLastMessage(id, limit, cursorCreatedAt);
 
   return { data: result };
 };
