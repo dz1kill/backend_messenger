@@ -16,11 +16,7 @@ import {
 import { UserGroup } from "../models/group_user";
 import { Group } from "../models/group";
 import WebSocket from "ws";
-import {
-  buildSuccessResponse,
-  calcOffset,
-  transformArrUserGroup,
-} from "./helper";
+import { buildSuccessResponse, transformArrUserGroup } from "./helper";
 import { Transaction } from "sequelize";
 import {
   ADD_USER_IN_GROUP,
@@ -94,20 +90,29 @@ const getDblatestMessageDialog = async (
   senderId: number,
   receiverId: number,
   limit: number,
-  offset: number
+  cursorCreatedAt: string
 ) =>
   await sequelize.query(
     `
-  SELECT sender_id, receiver_id,users.first_name as "receverName", content,  messages.created_at 
+  SELECT 
+   sender_id AS "senderId",
+   sender.first_name AS "senderName",
+   receiver_id AS "receiverId",
+   receiver.first_name AS "receiverName",
+   content,
+   messages.created_at AS "createdAt"
   FROM messages
 
-  INNER JOIN images ON messages.id = images.message_id
-  LEFT JOIN users ON messages.receiver_id = users.id
+  LEFT JOIN users AS sender ON sender.id = messages.sender_id
+  LEFT JOIN users AS receiver ON receiver.id = messages.receiver_id
+  LEFT JOIN images ON messages.id = images.message_id
 
   WHERE sender_id = ${senderId} AND receiver_id = ${receiverId}
        OR sender_id = ${receiverId} AND receiver_id = ${senderId}  
+ ${cursorCreatedAt ? `AND messages.created_at < '${cursorCreatedAt}'` : ""}
+  ORDER BY messages.created_at DESC
   LIMIT ${limit} 
-  OFFSET ${offset}`,
+  `,
     { raw: true, nest: true, model: Message }
   );
 
@@ -196,19 +201,27 @@ const getDblistLastMessage = async (
 const getDblatestMessageGroup = async (
   groupId: number,
   limit: number,
-  offset: number
+  cursorCreatedAt: string
 ) =>
   await sequelize.query(
     `
-    SELECT sender_id, users.first_name as "senderName", group_id, messages.created_at , content
+    SELECT
+    sender_id as "senderId",
+    users.first_name as "senderName",
+    group_id as "groupId",
+    groups.name AS "groupName",
+    content,
+    messages.created_at as "createdAt" 
     FROM messages
   
     LEFT JOIN users ON messages.sender_id = users.id
-    INNER JOIN images ON messages.id = images.message_id
-  
+    LEFT JOIN images ON messages.id = images.message_id
+    LEFT JOIN groups ON messages.group_id = groups.id
     WHERE group_id = ${groupId}
+    ${cursorCreatedAt ? `AND created_at < '${cursorCreatedAt}'` : ""}
+ 
     LIMIT ${limit}
-    OFFSET ${offset}   
+   
     
 `,
     { raw: true, nest: true, model: Message }
@@ -271,9 +284,13 @@ export const latestMessageDialog = async (
   client: JwtPayload
 ) => {
   const { id } = client;
-  const { limit, page, receiverId } = parseMessage.params;
-  const offset = calcOffset(page, limit);
-  const result = await getDblatestMessageDialog(id, receiverId, limit, offset);
+  const { limit, cursorCreatedAt, receiverId } = parseMessage.params;
+  const result = await getDblatestMessageDialog(
+    id,
+    receiverId,
+    limit,
+    cursorCreatedAt
+  );
 
   return { data: result };
 };
@@ -283,11 +300,10 @@ export const latestMessageGroup = async (
   client: JwtPayload
 ) => {
   const { id } = client;
-  const { limit, page, groupId } = parsedMessage.params;
+  const { limit, cursorCreatedAt, groupId } = parsedMessage.params;
 
-  const offset = calcOffset(page, limit);
   await checkUserGroup(id, groupId);
-  const result = await getDblatestMessageGroup(groupId, limit, offset);
+  const result = await getDblatestMessageGroup(groupId, limit, cursorCreatedAt);
 
   return { data: result };
 };

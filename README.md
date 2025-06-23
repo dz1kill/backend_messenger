@@ -21,28 +21,14 @@ Stack: Node.js, Express, WS, PostgreSQL, Sequelize-typescript, JWT.
 
 ## Examples of websocket requests and responses :
 
-1. Connection to the websocket occurs via the http protocol.  
-   In the connection request, the user token must be passed in the header.
+1. Connection to the server via websocket is organized in two ways, testing and for work.
 
-example of invalid token error:
+You can use Postman then when connecting in the header we must pass the token.
+Or connecting a client:  
+example connect
 
 ```js
-Error: Unexpected server response: 401
-Handshake Details
-Request URL: http://localhost:3000/
-Request Method: GET
-Status Code: 401 Unauthorized
-Request Headers
-Sec-WebSocket-Version: 13
-Sec-WebSocket-Key: aWKsrCP2KvNFlmstQdVEDA==
-Connection: Upgrade
-Upgrade: websocket
-Authorization: Bearer 1eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJlbWFpbEBtYWlsLmNvbTAiLCJmaXJzdE5hbWUiOiJQYXRyaWNrMCIsImlhdCI6MTY5MDU0NzU3NiwiZXhwIjoxNjkwNjMzOTc2fQ.AqE87IwBoyI0XlUDnVShjyQGZQd_IQB6L1-bdO_HnhM
-Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
-Host: localhost:3000
-Response Headers
-Online
-
+new WebSocket(url, ["auth", token]);
 ```
 
 2. list of recent chats with latest messages:  
@@ -53,7 +39,7 @@ Online
   "type": "listLastMessage",
   "params": {
     "limit": 5,
-    "page": 1
+    "cursorCreatedAt": null
   }
 }
 
@@ -99,7 +85,7 @@ Response:
   "params": {
     "receiverId":1,
     "limit": 5,
-    "page": 1
+    "cursorCreatedAt": null
   }
 }
 
@@ -114,11 +100,12 @@ Response:
     "params": {
         "data": [
             {
-             "sender_id": 1,
-             "receiver_id": 2,
-             "receverName": "Patrick1",
-             "content": "Message from 1",
-             "created_at": "2023-07-18T17:16:10.669Z"
+            "senderId": 3,
+            "senderName": "Charlie",
+            "receiverId": 1,
+            "receiverName": "Alice",
+            "content": "No worries, take your time.",
+            "createdAt": "2025-06-13T01:15:42.269Z"
             },
             // other messages
         ],
@@ -139,7 +126,7 @@ Response:
   "params": {
     "groupId": 1,
     "limit": 5,
-    "page": 1
+    "cursorCreatedAt": null
   }
 }
 
@@ -154,11 +141,12 @@ Response:
     "params": {
         "data": [
             {
-             "sender_id": 8,
-             "senderName": "Patrick7",
-             "group_id": 1,
-             "created_at": "2023-07-18T17:16:10.612Z",
-             "content": "Message from 8"
+            "senderId": 20,
+            "senderName": "Tina",
+            "groupId": 1,
+            "groupName": "Tech Geeks",
+            "content": "Thanks for the quick response.",
+            "createdAt": "2025-06-10T13:23:23.883Z"
             },
             // other messages
         ],

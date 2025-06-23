@@ -22,7 +22,7 @@ export const latestMessagesDialogSchema = z.object({
   params: z.object({
     receiverId: z.number(),
     limit: z.number(),
-    page: z.number(),
+    cursorCreatedAt: z.string().nullable(),
   }),
 });
 
@@ -31,7 +31,7 @@ export const latestMessagesGroupSchema = z.object({
   params: z.object({
     groupId: z.number(),
     limit: z.number(),
-    page: z.number(),
+    cursorCreatedAt: z.string().nullable(),
   }),
 });
 
@@ -84,8 +84,6 @@ export const validateByZod = (
 ) => {
   schema.parse(data);
 };
-
-export const calcOffset = (page: number, limit: number) => (page - 1) * limit;
 
 export const transformArrUserGroup = (usersInGroup: UserGroup[]) => {
   const userIds = [];

@@ -12,13 +12,13 @@ export type ParramListLastMessage = {
 export type ParramLastMessagesDialog = {
   receiverId: number;
   limit: number;
-  page: number;
+  cursorCreatedAt: string;
 };
 
 export type ParramLastMessagesGroup = {
   groupId: number;
   limit: number;
-  page: number;
+  cursorCreatedAt: string;
 };
 
 export type ParramNewGroup = {
