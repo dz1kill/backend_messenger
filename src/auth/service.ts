@@ -32,5 +32,11 @@ export async function authorizationUser(emailUser: string, password: string) {
   checkUser(findUser);
   await checkPasswordUser(password, findUser.password);
   const token = generateJwt(findUser.id, findUser.email, findUser.firstName);
-  return { message: "User is authorized", token, statusCode: 201 };
+  return {
+    message: "User is authorized",
+    token,
+    statusCode: 201,
+    id: findUser.id,
+    email: findUser.email,
+  };
 }
