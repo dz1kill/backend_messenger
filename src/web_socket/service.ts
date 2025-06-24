@@ -94,7 +94,8 @@ const getDblatestMessageDialog = async (
 ) =>
   await sequelize.query(
     `
-  SELECT 
+  SELECT
+   messages.id AS "messageId",
    sender_id AS "senderId",
    sender.first_name AS "senderName",
    receiver_id AS "receiverId",
@@ -176,7 +177,7 @@ const getDblistLastMessage = async (
   )
 
   SELECT 
-    id,
+    id as "messageId",
     sender_id as "senderId",
     "senderName",
     receiver_id as "receiverId",
@@ -206,12 +207,13 @@ const getDblatestMessageGroup = async (
   await sequelize.query(
     `
     SELECT
+    messages.id AS "messageId",
     sender_id as "senderId",
     users.first_name as "senderName",
     group_id as "groupId",
     groups.name AS "groupName",
     content,
-    messages.created_at as "createdAt" 
+    messages.created_at as "createdAt"
     FROM messages
   
     LEFT JOIN users ON messages.sender_id = users.id

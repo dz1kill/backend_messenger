@@ -54,7 +54,7 @@ Response:
     "params": {
         "data": [
             {
-            "id": 65,
+            "messageId": 3,
             "senderId": 2,
             "senderName": "Patrick1",
             "receiverId": 1,
@@ -100,6 +100,7 @@ Response:
     "params": {
         "data": [
             {
+            "messageId": 309
             "senderId": 3,
             "senderName": "Charlie",
             "receiverId": 1,
@@ -141,6 +142,7 @@ Response:
     "params": {
         "data": [
             {
+            "messageId": 30
             "senderId": 20,
             "senderName": "Tina",
             "groupId": 1,
