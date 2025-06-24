@@ -24,14 +24,12 @@ export async function authorization(
   try {
     const { email, password } = req.body;
     const result = await authorizationUser(email, password);
-    res
-      .status(result.statusCode || 200)
-      .json({
-        message: result.message,
-        token: result.token,
-        id: result.id,
-        email: result.email,
-      });
+    res.status(result.statusCode || 200).json({
+      id: result.id,
+      email: result.email,
+      message: result.message,
+      token: result.token,
+    });
   } catch (error) {
     res
       .status(error.statusCode || 500)
