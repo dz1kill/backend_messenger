@@ -36,7 +36,5 @@ export async function authorizationUser(emailUser: string, password: string) {
     message: "User is authorized",
     token,
     statusCode: 201,
-    id: findUser.id,
-    email: findUser.email,
   };
 }
