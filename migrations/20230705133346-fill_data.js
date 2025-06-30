@@ -2,8 +2,8 @@ const { hashPassword, getRandomIntInclusive } = require("./helper/common.js");
 
 const NUMBER_OF_USERS = 20;
 const NUMBER_OF_GROUPS = 30;
-const MESSAGE_MIN = 10;
-const MESSAGE_MAX = 20;
+const MESSAGES_PER_CONVERSATION_MIN = 20;
+const MESSAGES_PER_CONVERSATION_MAX = 30;
 const GROUPS_PER_USER_MIN = 7;
 const GROUPS_PER_USER_MAX = 14;
 const MESSAGE_TEMPLATES = [
@@ -145,35 +145,60 @@ module.exports = {
 
     // MESSAGES
     const messages = [];
-    for (const user of createdUsers) {
-      const messageCount = getRandomIntInclusive(MESSAGE_MIN, MESSAGE_MAX);
+
+    // Generate private conversations (each pair of users)
+    for (let i = 0; i < createdUsers.length; i++) {
+      for (let j = i + 1; j < createdUsers.length; j++) {
+        const messageCount = getRandomIntInclusive(
+          MESSAGES_PER_CONVERSATION_MIN,
+          MESSAGES_PER_CONVERSATION_MAX
+        );
+
+        for (let k = 0; k < messageCount; k++) {
+          // Alternate sender between the two users
+          const sender_id =
+            k % 2 === 0 ? createdUsers[i].id : createdUsers[j].id;
+          const receiver_id =
+            k % 2 === 0 ? createdUsers[j].id : createdUsers[i].id;
+
+          messages.push({
+            sender_id,
+            receiver_id,
+            content: getRandomMessage(),
+            created_at: getRandomDateWithinLast5Days(),
+            updated_at: new Date(),
+          });
+        }
+      }
+    }
+
+    // Generate group conversations
+    for (const group of createdGroups) {
+      const groupUsers = usersGroups
+        .filter((ug) => ug.group_id === group.id)
+        .map((ug) => ug.user_id);
+
+      if (groupUsers.length === 0) continue;
+
+      const messageCount = getRandomIntInclusive(
+        MESSAGES_PER_CONVERSATION_MIN,
+        MESSAGES_PER_CONVERSATION_MAX
+      );
+
       for (let i = 0; i < messageCount; i++) {
-        const isPrivate = Math.random() < 0.5;
-        const message = {
-          sender_id: user.id,
+        const sender_id =
+          groupUsers[Math.floor(Math.random() * groupUsers.length)];
+
+        messages.push({
+          sender_id,
+          group_id: group.id,
           content: getRandomMessage(),
           created_at: getRandomDateWithinLast5Days(),
           updated_at: new Date(),
-        };
-        if (isPrivate) {
-          let receiver;
-          do {
-            receiver =
-              createdUsers[Math.floor(Math.random() * createdUsers.length)].id;
-          } while (receiver === user.id);
-          message.receiver_id = receiver;
-        } else {
-          const userGroupIds = usersGroups
-            .filter((ug) => ug.user_id === user.id)
-            .map((ug) => ug.group_id);
-          if (userGroupIds.length > 0) {
-            message.group_id =
-              userGroupIds[Math.floor(Math.random() * userGroupIds.length)];
-          }
-        }
-        messages.push(message);
+        });
       }
     }
+
     await queryInterface.bulkInsert("messages", messages);
   },
 

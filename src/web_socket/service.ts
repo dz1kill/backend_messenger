@@ -93,8 +93,7 @@ const getDblatestMessageDialog = async (
   cursorCreatedAt: string
 ) =>
   await sequelize.query(
-    `
-  SELECT
+    `SELECT
    messages.id AS "messageId",
    sender_id AS "senderId",
    sender.first_name AS "senderName",
@@ -102,17 +101,18 @@ const getDblatestMessageDialog = async (
    receiver.first_name AS "receiverName",
    content,
    messages.created_at AS "createdAt"
-  FROM messages
-
-  LEFT JOIN users AS sender ON sender.id = messages.sender_id
-  LEFT JOIN users AS receiver ON receiver.id = messages.receiver_id
-  LEFT JOIN images ON messages.id = images.message_id
-
-  WHERE sender_id = ${senderId} AND receiver_id = ${receiverId}
-       OR sender_id = ${receiverId} AND receiver_id = ${senderId}  
- ${cursorCreatedAt ? `AND messages.created_at < '${cursorCreatedAt}'` : ""}
-  ORDER BY messages.created_at DESC
-  LIMIT ${limit} 
+FROM messages
+LEFT JOIN users AS sender ON sender.id = messages.sender_id
+LEFT JOIN users AS receiver ON receiver.id = messages.receiver_id
+WHERE (sender_id = ${senderId} AND receiver_id = ${receiverId}
+    OR sender_id = ${receiverId} AND receiver_id = ${senderId})
+${
+  cursorCreatedAt
+    ? `AND messages.created_at < TIMESTAMP '${cursorCreatedAt}'`
+    : ""
+}
+ORDER BY messages.created_at DESC
+LIMIT ${limit}
   `,
     { raw: true, nest: true, model: Message }
   );
@@ -123,51 +123,73 @@ const getDblistLastMessage = async (
   cursorCreatedAt: string | null
 ) =>
   await sequelize.query(
-    `WITH numbered_messages AS (
+    `WITH user_conversations AS (
   SELECT 
-    messages.id, 
-    sender_id, 
-    receiver_id, 
-    group_id, 
-    content, 
-    messages.created_at, 
-    messages.updated_at, 
-    messages.deleted_at,
-    ROW_NUMBER() OVER (
-      PARTITION BY sender_id, receiver_id, group_id 
-      ORDER BY messages.created_at DESC
-    ) AS r_number,
-    groups.name AS "groupName", 
-    users.first_name AS "senderName",
-    receivers.first_name AS "receiverName"
+    CASE 
+      WHEN group_id IS NOT NULL THEN 'group_' || group_id
+      WHEN sender_id < receiver_id THEN 'private_' || sender_id || '_' || receiver_id
+      ELSE 'private_' || receiver_id || '_' || sender_id
+    END AS conversation_id,
+    MAX(messages.created_at) AS last_message_time
   FROM messages
-  LEFT JOIN groups ON messages.group_id = groups.id
-  LEFT JOIN users ON messages.sender_id = users.id
-  LEFT JOIN users AS receivers ON messages.receiver_id = receivers.id
   WHERE 
     (sender_id = ${userId} OR receiver_id = ${userId} OR group_id IN (
       SELECT group_id FROM users_groups WHERE user_id = ${userId}
     ))
-    ${cursorCreatedAt ? `AND messages.created_at < '${cursorCreatedAt}'` : ""}
+  GROUP BY conversation_id
+  ${
+    cursorCreatedAt
+      ? `HAVING MAX(messages.created_at) < '${cursorCreatedAt}'`
+      : ""
+  }
+  ORDER BY last_message_time DESC
+  LIMIT ${limit}
+),
+last_messages AS (
+  SELECT 
+    m.id, 
+    m.sender_id, 
+    m.receiver_id, 
+    m.group_id, 
+    m.content, 
+    m.created_at, 
+    m.updated_at, 
+    m.deleted_at,
+    g.name AS "groupName", 
+    u.first_name AS "senderName",
+    r.first_name AS "receiverName",
+    CASE 
+      WHEN m.group_id IS NOT NULL THEN 'group_' || m.group_id
+      WHEN m.sender_id < m.receiver_id THEN 'private_' || m.sender_id || '_' || m.receiver_id
+      ELSE 'private_' || m.receiver_id || '_' || m.sender_id
+    END AS conversation_id
+  FROM messages m
+  JOIN user_conversations uc ON 
+    CASE 
+      WHEN m.group_id IS NOT NULL THEN 'group_' || m.group_id
+      WHEN m.sender_id < m.receiver_id THEN 'private_' || m.sender_id || '_' || m.receiver_id
+      ELSE 'private_' || m.receiver_id || '_' || m.sender_id
+    END = uc.conversation_id
+    AND m.created_at = uc.last_message_time
+  LEFT JOIN groups g ON m.group_id = g.id
+  LEFT JOIN users u ON m.sender_id = u.id
+  LEFT JOIN users r ON m.receiver_id = r.id
 )
 
-  SELECT 
-    id as "messageId", 
-    sender_id AS "senderId", 
-    "senderName", 
-    receiver_id AS "receiverId", 
-    "receiverName", 
-    group_id AS "groupId", 
-    "groupName", 
-    content,
-    created_at AS "createdAt", 
-    updated_at AS "updatedAt", 
-    deleted_at AS "deletedAt"
-FROM numbered_messages
-WHERE r_number = 1
-ORDER BY created_at DESC
-LIMIT ${limit};
-`,
+SELECT 
+  id as "messageId", 
+  sender_id AS "senderId", 
+  "senderName", 
+  receiver_id AS "receiverId", 
+  "receiverName", 
+  group_id AS "groupId", 
+  "groupName", 
+  content,
+  created_at AS "createdAt", 
+  updated_at AS "updatedAt", 
+  deleted_at AS "deletedAt"
+FROM last_messages
+ORDER BY "createdAt" DESC;`,
     { raw: true, nest: true, model: Message }
   );
 
