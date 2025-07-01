@@ -20,7 +20,7 @@ export const listLastMessageSchema = z.object({
 export const latestMessagesDialogSchema = z.object({
   type: z.string(),
   params: z.object({
-    receiverId: z.number(),
+    receiverId: z.string().uuid(),
     limit: z.number(),
     cursorCreatedAt: z.string().nullable(),
   }),
@@ -29,7 +29,7 @@ export const latestMessagesDialogSchema = z.object({
 export const latestMessagesGroupSchema = z.object({
   type: z.string(),
   params: z.object({
-    groupId: z.number(),
+    groupId: z.string().uuid(),
     limit: z.number(),
     cursorCreatedAt: z.string().nullable(),
   }),
@@ -38,6 +38,7 @@ export const latestMessagesGroupSchema = z.object({
 export const newGroupSchema = z.object({
   type: z.string(),
   params: z.object({
+    groupId: z.string().uuid(),
     groupName: z.string(),
   }),
 });
@@ -45,22 +46,23 @@ export const newGroupSchema = z.object({
 export const addUserInGroupSchema = z.object({
   type: z.string(),
   params: z.object({
-    groupId: z.number(),
-    userId: z.number(),
+    groupId: z.string().uuid(),
+    userId: z.string().uuid(),
   }),
 });
 
 export const leaveGroupSchema = z.object({
   type: z.string(),
   params: z.object({
-    groupId: z.number(),
+    groupId: z.string().uuid(),
   }),
 });
 
 export const MessageInGroupSchema = z.object({
   type: z.string(),
   params: z.object({
-    groupId: z.number(),
+    messageId: z.string().uuid(),
+    groupId: z.string().uuid(),
     content: z.string(),
   }),
 });
@@ -68,7 +70,8 @@ export const MessageInGroupSchema = z.object({
 export const privateMessageSchema = z.object({
   type: z.string(),
   params: z.object({
-    receiverId: z.number(),
+    messageId: z.string().uuid(),
+    receiverId: z.string().uuid(),
     content: z.string(),
   }),
 });

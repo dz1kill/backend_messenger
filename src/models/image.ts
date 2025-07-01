@@ -7,6 +7,7 @@ import {
   BelongsTo,
 } from "sequelize-typescript";
 import { Message } from "./message";
+import { UUID } from "crypto";
 
 @Table({
   tableName: "images",
@@ -15,18 +16,18 @@ import { Message } from "./message";
 })
 export class Image extends Model {
   @Column({
-    type: DataType.INTEGER(),
+    type: DataType.UUIDV4(),
     primaryKey: true,
     autoIncrement: true,
   })
-  id: number;
+  id: UUID;
 
   @ForeignKey(() => Message)
   @Column({
-    type: DataType.INTEGER(),
+    type: DataType.UUID(),
     allowNull: false,
   })
-  messageId: number;
+  messageId: string;
 
   @BelongsTo(() => Message)
   messages: Message;

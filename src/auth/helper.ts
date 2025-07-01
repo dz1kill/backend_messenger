@@ -30,10 +30,7 @@ export async function checkPasswordUser(
   passwordReq: string,
   passwordSaveInDB: string
 ) {
-  const resultParse = await bcrypt.compare(
-    passwordReq,
-    passwordSaveInDB
-  );
+  const resultParse = await bcrypt.compare(passwordReq, passwordSaveInDB);
   if (!resultParse) {
     throw {
       message: "No such user exists or wrong password",
@@ -42,11 +39,7 @@ export async function checkPasswordUser(
   }
 }
 
-export function generateJwt(
-  id: number,
-  email: string,
-  firstName: string
-) {
+export function generateJwt(id: string, email: string, firstName: string) {
   return jwt.sign({ id, email, firstName }, config.get("JWT.key"), {
     expiresIn: "24h",
   });

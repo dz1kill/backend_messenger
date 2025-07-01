@@ -10,37 +10,40 @@ export type ParramListLastMessage = {
 };
 
 export type ParramLastMessagesDialog = {
-  receiverId: number;
+  receiverId: string;
   limit: number;
   cursorCreatedAt: string;
 };
 
 export type ParramLastMessagesGroup = {
-  groupId: number;
+  groupId: string;
   limit: number;
   cursorCreatedAt: string;
 };
 
 export type ParramNewGroup = {
   groupName: string;
+  groupId: string;
 };
 
 export type ParramAddUserInGroup = {
-  userId: number;
-  groupId: number;
+  userId: string;
+  groupId: string;
 };
 
 export type ParramLeaveGroup = {
-  groupId: number;
+  groupId: string;
 };
 
 export type ParramMessageGroup = {
-  groupId: number;
+  messageId: string;
+  groupId: string;
   content: string;
 };
 
 export type ParramPrivateMessage = {
-  receiverId: number;
+  messageId: string;
+  receiverId: string;
   content: string;
 };
 

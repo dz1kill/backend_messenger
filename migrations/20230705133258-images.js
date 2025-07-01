@@ -3,14 +3,14 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable("images", {
       id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.literal("gen_random_uuid()"),
         primaryKey: true,
         allowNull: false,
       },
 
       message_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         onDelete: "CASCADE",
         allowNull: false,
         references: {

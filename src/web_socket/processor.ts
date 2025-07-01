@@ -65,7 +65,9 @@ export const processor = async (
     case GET_LATEST_MESSAGE_GROUP:
       try {
         validateByZod(parsedMessage, latestMessagesGroupSchema);
+
         const result = await latestMessageGroup(parsedMessage, client);
+
         buildSuccessResponse(ws, result, GET_LATEST_MESSAGE_GROUP);
       } catch (error) {
         buildErrorResponse(ws, error, GET_LATEST_MESSAGE_GROUP);
@@ -94,6 +96,7 @@ export const processor = async (
       } catch (error) {
         buildErrorResponse(ws, error, ADD_USER_IN_GROUP);
       }
+
       break;
 
     case LEAVE_GROUP:

@@ -15,11 +15,11 @@ import { UserGroup } from "./group_user";
 })
 export class User extends Model {
   @Column({
-    type: DataType.INTEGER(),
+    type: DataType.UUID(),
     primaryKey: true,
     autoIncrement: true,
   })
-  id: number;
+  id: string;
 
   @Column({
     type: DataType.STRING(),

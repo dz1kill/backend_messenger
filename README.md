@@ -54,17 +54,17 @@ Response:
     "params": {
         "data": [
             {
-            "messageId": 3,
-            "senderId": 2,
-            "senderName": "Patrick1",
-            "receiverId": 1,
-            "receiverName": "Patrick0",
-            "groupId": null,
-            "groupName": null,
-            "content": "Hi",
-            "createdAt": "2023-07-28T13:20:09.896Z",
-            "updatedAt": "2023-07-28T13:20:09.896Z",
-            "deletedAt": null
+                "messageId": "2d44a4a3-1a75-4e64-9dd6-99876d750de3",
+                "senderId": "8f2cf7a5-688c-47d8-a8b7-2c14d63a665b",
+                "senderName": "Ian",
+                "receiverId": null,
+                "receiverName": null,
+                "groupId": "4be49da0-df09-49d5-9de1-9a84553b2ef9",
+                "groupName": "Design Hub",
+                "content": "Thanks for the quick response.",
+                "createdAt": "2025-07-01T15:24:16.941Z",
+                "updatedAt": "2025-07-01T15:43:28.339Z",
+                "deletedAt": null
             },
             // other chats
         ],
@@ -83,7 +83,7 @@ Response:
 {
   "type": "getlatestMessageDialog",
   "params": {
-    "receiverId":1,
+    "receiverId":"3989f7d0-7a78-4914-b7eb-bff07c619e97",
     "limit": 5,
     "cursorCreatedAt": null
   }
@@ -100,13 +100,13 @@ Response:
     "params": {
         "data": [
             {
-            "messageId": 309
-            "senderId": 3,
-            "senderName": "Charlie",
-            "receiverId": 1,
-            "receiverName": "Alice",
-            "content": "No worries, take your time.",
-            "createdAt": "2025-06-13T01:15:42.269Z"
+                "messageId": "a439b5bc-c2ec-4487-b2cd-29ceb8345d27",
+                "senderId": "3989f7d0-7a78-4914-b7eb-bff07c619e97",
+                "senderName": "Alice",
+                "receiverId": "c6674a8e-7619-4198-9897-d2ed90572568",
+                "receiverName": "Charlie",
+                "content": "I'll send the file soon.",
+                "createdAt": "2025-07-01T12:05:55.586Z"
             },
             // other messages
         ],
@@ -125,7 +125,7 @@ Response:
 {
   "type": "getlatestMessageGroup",
   "params": {
-    "groupId": 1,
+    "groupId": "75b3f7bc-41d5-407d-b0ec-20e2490266de",
     "limit": 5,
     "cursorCreatedAt": null
   }
@@ -142,13 +142,13 @@ Response:
     "params": {
         "data": [
             {
-            "messageId": 30
-            "senderId": 20,
-            "senderName": "Tina",
-            "groupId": 1,
-            "groupName": "Tech Geeks",
-            "content": "Thanks for the quick response.",
-            "createdAt": "2025-06-10T13:23:23.883Z"
+                "messageId": "322ad6fa-7f30-4efc-a7e1-dbe351d3f125",
+                "senderId": "639862ba-7be1-48b4-ae7a-34457581c09a",
+                "senderName": "Laura",
+                "groupId": "75b3f7bc-41d5-407d-b0ec-20e2490266de",
+                "groupName": "Movie Buffs",
+                "content": "Hey, how's it going?",
+                "createdAt": "2025-06-30T00:12:53.094Z"
             },
             // other messages
         ],
@@ -166,6 +166,7 @@ Response:
 {
   "type": "newGroup",
   "params": {
+    "groupId": "322ad4fa-7f30-4efc-a7e1-dbe351d3f125",
     "groupName": "new name"
   }
 }
@@ -194,8 +195,8 @@ Response:
 {
   "type": "addUserInGroup",
   "params": {
-    "groupId": 1,
-    "userId": 1
+    "groupId": "aefb7d52-5bf6-4851-a2d3-c902f12d007f",
+    "userId": "10ca546a-dab4-470f-b93c-787de10d46c1"
   }
 }
 
@@ -223,7 +224,7 @@ Response:
 {
   "type": "leaveGroup",
   "params": {
-    "groupId": 1
+    "groupId": "aefb7d52-5bf6-4851-a2d3-c902f12d007f"
   }
 }
 
@@ -251,7 +252,8 @@ Response:
 {
   "type": "messageInGroup",
   "params": {
-    "groupId": 1,
+    "messageId":"3989f7d0-7a78-4914-b7eb-bff07c619e97",
+    "groupId": "4be49da0-df09-49d5-9de1-9a84553b2ef9",
     "content": "lol"
   }
 }
@@ -280,7 +282,8 @@ Response:
 {
   "type": "privateMessage",
   "params": {
-  "receiverId": 2,
+  "messageId":"3979f7d0-7a78-4914-b7eb-bff07c619e97",
+  "receiverId": "7e7c8487-9cc2-45d5-8c8d-7c37356cec06",
   "content":"Hi"
   }
 }

@@ -15,23 +15,23 @@ import { User } from "./user";
 })
 export class UserGroup extends Model {
   @Column({
-    type: DataType.INTEGER(),
+    type: DataType.UUID(),
     primaryKey: true,
     autoIncrement: true,
   })
-  id: number;
+  id: string;
 
   @ForeignKey(() => Group)
   @Column({
-    type: DataType.INTEGER(),
+    type: DataType.UUID(),
     allowNull: false,
   })
-  groupId: number;
+  groupId: string;
 
   @ForeignKey(() => User)
   @Column({
-    type: DataType.INTEGER(),
+    type: DataType.UUID(),
     allowNull: false,
   })
-  userId: number;
+  userId: string;
 }

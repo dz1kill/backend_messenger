@@ -9,6 +9,7 @@ import {
 import { UserGroup } from "./group_user";
 import { User } from "./user";
 import { Message } from "./message";
+import { UUID } from "crypto";
 
 @Table({
   tableName: "groups",
@@ -17,11 +18,11 @@ import { Message } from "./message";
 })
 export class Group extends Model {
   @Column({
-    type: DataType.INTEGER(),
+    type: DataType.UUID(),
     primaryKey: true,
     autoIncrement: true,
   })
-  id: number;
+  id: string;
 
   @Column({
     type: DataType.STRING(),
