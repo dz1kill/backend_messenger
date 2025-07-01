@@ -211,10 +211,10 @@ const getDblatestMessageGroup = async (
     FROM messages
   
     LEFT JOIN users ON messages.sender_id = users.id
-    LEFT JOIN images ON messages.id = images.message_id
     LEFT JOIN groups ON messages.group_id = groups.id
+
     WHERE group_id = ${groupId}
-    ${cursorCreatedAt ? `AND created_at < '${cursorCreatedAt}'` : ""}
+    ${cursorCreatedAt ? `AND messages.created_at < '${cursorCreatedAt}'` : ""}
  
     LIMIT ${limit}
    
