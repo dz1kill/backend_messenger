@@ -304,7 +304,7 @@ Response:
 }
 ```
 
-9. Message sending example:
+9. Example of mailing:
 
 Response:
 
