@@ -1,4 +1,5 @@
 const { hashPassword, getRandomIntInclusive } = require("./helper/common.js");
+const crypto = require("crypto");
 
 const NUMBER_OF_USERS = 20;
 const NUMBER_OF_GROUPS = 30;
@@ -103,6 +104,7 @@ module.exports = {
       const [first_name, last_name] = userNames[i];
       const password = await hashPassword("1234");
       users.push({
+        id: crypto.randomUUID(),
         first_name,
         last_name,
         email: `email${i}@mail.com`,
@@ -115,6 +117,7 @@ module.exports = {
 
     // GROUPS
     const groups = groupNames.map((name) => ({
+      id: crypto.randomUUID(),
       name,
       created_at: new Date(),
       updated_at: new Date(),
