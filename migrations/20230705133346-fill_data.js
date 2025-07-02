@@ -104,7 +104,6 @@ module.exports = {
       const [first_name, last_name] = userNames[i];
       const password = await hashPassword("1234");
       users.push({
-        id: crypto.randomUUID(),
         first_name,
         last_name,
         email: `email${i}@mail.com`,
@@ -165,6 +164,7 @@ module.exports = {
             k % 2 === 0 ? createdUsers[j].id : createdUsers[i].id;
 
           messages.push({
+            id: crypto.randomUUID(),
             sender_id,
             receiver_id,
             content: getRandomMessage(),
@@ -193,6 +193,7 @@ module.exports = {
           groupUsers[Math.floor(Math.random() * groupUsers.length)];
 
         messages.push({
+          id: crypto.randomUUID(),
           sender_id,
           group_id: group.id,
           content: getRandomMessage(),
