@@ -1,6 +1,5 @@
 import { JwtPayload } from "jsonwebtoken";
 import sequelize from "../models";
-import { Message } from "../models/message";
 import {
   ParramAddUserInGroup,
   ParramLastMessagesDialog,
@@ -208,31 +207,34 @@ const getDblatestMessageGroup = async (
 ) =>
   await sequelize.query<ResDataLatestMessageGroup>(
     `
-  SELECT
-  messages.id AS "messageId",
-  sender_id as "senderId",
-  users.first_name as "senderName",
-  group_id as "groupId",
-  groups.name AS "groupName",
-  content,
-  messages.created_at as "createdAt"
-  FROM messages
-
-  LEFT JOIN users ON messages.sender_id = users.id
-  LEFT JOIN groups ON messages.group_id = groups.id
-
-  WHERE group_id = '${groupId}'
-  ${
-    cursorCreatedAt
-      ? `AND messages.created_at < TIMESTAMP '${cursorCreatedAt}'`
-      : ""
-  }
-
-  LIMIT ${limit}
- 
-  
-`,
-    { raw: true, nest: true, type: QueryTypes.SELECT }
+    SELECT
+      messages.id AS "messageId",
+      messages.sender_id AS "senderId",
+      users.first_name AS "senderName",
+      messages.group_id AS "groupId",
+      groups.name AS "groupName",
+      messages.content,
+      messages.created_at AS "createdAt"
+    FROM messages
+    LEFT JOIN users ON messages.sender_id = users.id
+    LEFT JOIN groups ON messages.group_id = groups.id
+    WHERE 
+      messages.group_id = :groupId AND
+      messages.deleted_at IS NULL
+      ${cursorCreatedAt ? `AND messages.created_at < :cursorCreatedAt` : ""}
+    ORDER BY messages.created_at DESC  -- 🔥 Ключевое для пагинации!
+    LIMIT :limit
+  `,
+    {
+      replacements: {
+        groupId,
+        limit,
+        ...(cursorCreatedAt && { cursorCreatedAt }),
+      },
+      raw: true,
+      nest: true,
+      type: QueryTypes.SELECT,
+    }
   );
 
 const dropUserGroup = async (userId: string, groupId: string) => {
