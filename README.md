@@ -49,7 +49,7 @@ Response:
 
 ```js
 {
-    "type": "listLastMessageResponse",
+    "type": "listLastMessage",
     "success": true,
     "params": {
         "data": [
@@ -95,7 +95,7 @@ Response:
 
 ```js
 {
-    "type": "getlatestMessageDialogResponse",
+    "type": "getlatestMessageDialog",
     "success": true,
     "params": {
         "data": [
@@ -137,7 +137,7 @@ Response:
 
 ```js
 {
-    "type": "getlatestMessageGroupResponse",
+    "type": "getlatestMessageGroup",
     "success": true,
     "params": {
         "data": [
@@ -177,7 +177,7 @@ Response:
 
 ```js
 {
-    "type": "newGroupResponse",
+    "type": "newGroup",
     "success": true,
     "params": {
         "data": null,
@@ -206,7 +206,7 @@ Response:
 
 ```js
 {
-    "type": "addUserInGroupResponse",
+    "type": "addUserInGroup",
     "success": true,
     "params": {
         "data": null,
@@ -234,7 +234,7 @@ Response:
 
 ```js
 {
-    "type": "leaveGroupResponse",
+    "type": "leaveGroup",
     "success": true,
     "params": {
         "data": null,
@@ -288,7 +288,7 @@ Response:
 
 ```js
 {
-    "type": "leaveGroupResponse",
+    "type": "messageInGroup",
     "success": true,
     "params": {
         "data": null,
