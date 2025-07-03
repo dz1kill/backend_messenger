@@ -39,6 +39,7 @@ export type ParramMessageGroup = {
   messageId: string;
   groupId: string;
   content: string;
+  groupName: string;
 };
 
 export type ParramPrivateMessage = {
@@ -46,8 +47,6 @@ export type ParramPrivateMessage = {
   receiverId: string;
   content: string;
 };
-
-type ParramsResData = Message[];
 
 export type ParamsType = ParramListLastMessage &
   ParramLastMessagesDialog &
@@ -57,9 +56,68 @@ export type ParamsType = ParramListLastMessage &
   ParramMessageGroup &
   ParramPrivateMessage;
 
+export interface ResDataListLastMessage {
+  messageId: string;
+  senderId: string;
+  senderName: string;
+  receiverId: string | null;
+  receiverName: string | null;
+  groupId: string | null;
+  groupName: string | null;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface ResDatalatestMessageDialog {
+  messageId: string;
+  senderId: string;
+  senderName: string;
+  receiverId: string;
+  receiverName: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ResDataLatestMessageGroup {
+  messageId: string;
+  senderId: string;
+  senderName: string;
+  groupId: string;
+  groupName: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ResItemPrivateMessage {
+  messageId: string;
+  message: string;
+  senderName: string;
+  senderId: string;
+  createdAt: string;
+}
+
+export interface ResItemGroupMessage {
+  groupId: string;
+  groupName: string;
+  messageId: string;
+  message: string;
+  senderName: string;
+  senderId: string;
+  createdAt: string;
+}
+
+type MessageData =
+  | ResDataListLastMessage[]
+  | ResDatalatestMessageDialog[]
+  | ResDataLatestMessageGroup[];
+
+type MessageItem = ResItemPrivateMessage | ResItemGroupMessage | {};
+
 export type ParramsResultSuccessResponse = {
-  item?: {} | null;
-  data?: ParramsResData | null;
+  item?: MessageItem | null;
+  data?: MessageData | null;
   isBroadcast?: boolean;
 };
 

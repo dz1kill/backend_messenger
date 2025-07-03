@@ -253,9 +253,33 @@ Response:
   "type": "messageInGroup",
   "params": {
     "messageId":"3989f7d0-7a78-4914-b7eb-bff07c619e97",
+    "groupName": "Tech Geeks",
     "groupId": "4be49da0-df09-49d5-9de1-9a84553b2ef9",
-    "content": "lol"
+    "content": "Hi"
   }
+}
+
+```
+
+Broadcast:
+
+```js
+{
+    "type": "messageInGroup",
+    "success": true,
+    "params": {
+        "item": {
+            "groupId": "9fd7ff5c-10c4-4852-81aa-84055052f29c",
+            "groupName": "Language Learners",
+            "messageId": "6e472b55-7e69-4a68-bd64-0729840e96ef",
+            "message": "Hi",
+            "senderName": "Bob",
+            "senderId": "525c8f71-b19a-4dc5-a516-ac1fe5e6120a",
+            "createdAt": "2025-07-03T12:41:04.944Z"
+        },
+        "data": null,
+        "isBroadcast": true
+    }
 }
 
 ```
@@ -264,7 +288,7 @@ Response:
 
 ```js
 {
-    "type": "messageInGroupResponse",
+    "type": "leaveGroupResponse",
     "success": true,
     "params": {
         "data": null,
@@ -290,7 +314,7 @@ Response:
 
 ```
 
-Response:
+Broadcast:
 
 ```js
 {
@@ -298,11 +322,14 @@ Response:
     "success": true,
     "params": {
         "item": {
-            "message": "lol",
-            "senderName": "Bob"
+            "messageId": "5f0da29b-93b9-4f4e-bb16-ba75f4d7af06",
+            "message": "Hi",
+            "senderName": "Bob",
+            "senderId": "525c8f71-b19a-4dc5-a516-ac1fe5e6120a",
+            "createdAt": "2025-07-03T10:16:06.340Z"
         },
         "data": null,
-        "isBroadcast": false
+        "isBroadcast": true
     }
 }
 ```
@@ -316,23 +343,7 @@ Response:
     "params": {
         "item": null
         "data": null,
-        "isBroadcast": true
-    }
-}
-```
-
-9. Example of mailing:
-
-Response:
-
-```js
-{
-    "type": "privateMessage",
-    "success": true,
-    "params": {
-        "data": null,
-        "isBroadcast": true,
-        "item":null
+        "isBroadcast": false
     }
 }
 ```

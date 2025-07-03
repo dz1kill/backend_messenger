@@ -12,12 +12,15 @@ import {
   ParramPrivateMessage,
   ParramsResultSuccessResponse,
   ReqMessageDTO,
+  ResDatalatestMessageDialog,
+  ResDataLatestMessageGroup,
+  ResDataListLastMessage,
 } from "./types";
 import { UserGroup } from "../models/group_user";
 import { Group } from "../models/group";
 import WebSocket from "ws";
 import { buildSuccessResponse, transformArrUserGroup } from "./helper";
-import { Transaction } from "sequelize";
+import { QueryTypes, Transaction } from "sequelize";
 import {
   ADD_USER_IN_GROUP,
   LEAVE_GROUP,
@@ -32,6 +35,7 @@ const checkUserGroup = async (userId: string, groupId: string) => {
   WHERE user_id = '${userId}' AND group_id = '${groupId}'`,
     { raw: true, nest: true, model: UserGroup }
   );
+
   if (result.length === 0) {
     throw { message: "User is not a member of this group" };
   }
@@ -96,7 +100,7 @@ const getDblatestMessageDialog = async (
   limit: number,
   cursorCreatedAt: string
 ) =>
-  await sequelize.query(
+  await sequelize.query<ResDatalatestMessageDialog>(
     `SELECT
    messages.id AS "messageId",
    sender_id AS "senderId",
@@ -118,7 +122,7 @@ ${
 ORDER BY messages.created_at DESC
 LIMIT ${limit}
   `,
-    { raw: true, nest: true, model: Message }
+    { raw: true, nest: true, type: QueryTypes.SELECT }
   );
 
 const getDblistLastMessage = async (
@@ -126,7 +130,7 @@ const getDblistLastMessage = async (
   limit: number,
   cursorCreatedAt: string | null
 ) =>
-  await sequelize.query(
+  await sequelize.query<ResDataListLastMessage>(
     `WITH user_conversations AS (
   SELECT 
     CASE 
@@ -194,7 +198,7 @@ SELECT
   deleted_at AS "deletedAt"
 FROM last_messages
 ORDER BY "createdAt" DESC;`,
-    { raw: true, nest: true, model: Message }
+    { raw: true, nest: true, type: QueryTypes.SELECT }
   );
 
 const getDblatestMessageGroup = async (
@@ -202,7 +206,7 @@ const getDblatestMessageGroup = async (
   limit: number,
   cursorCreatedAt: string
 ) =>
-  await sequelize.query(
+  await sequelize.query<ResDataLatestMessageGroup>(
     `
   SELECT
   messages.id AS "messageId",
@@ -224,7 +228,7 @@ const getDblatestMessageGroup = async (
  
   
 `,
-    { raw: true, nest: true, model: Message }
+    { raw: true, nest: true, type: QueryTypes.SELECT }
   );
 
 const dropUserGroup = async (userId: string, groupId: string) => {
@@ -240,18 +244,17 @@ const insertMessageGroup = async (
   senderId: string,
   groupId: string,
   content: string,
-  maessageId: string
-) => {
-  await sequelize.query(
+  messageId: string
+) =>
+  await sequelize.query<Promise<{ createdAt: string } | null>>(
     `
-  
   INSERT INTO messages (id, sender_id, receiver_id, group_id, content,  created_at, updated_at, deleted_at )
-  VALUES ('${maessageId}', '${senderId}', NULL, '${groupId}', '${content}' ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+  VALUES ('${messageId}', '${senderId}', NULL, '${groupId}', '${content}' ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+  RETURNING created_at as "createdAt"
 
   `,
-    { model: Message }
+    { raw: true, nest: true, type: QueryTypes.SELECT }
   );
-};
 
 const insertPrivateMessage = async (
   senderId: string,
@@ -259,7 +262,7 @@ const insertPrivateMessage = async (
   content: string,
   messageId: string
 ) =>
-  await sequelize.query(
+  await sequelize.query<Promise<{ createdAt: string } | null>>(
     `
   
   INSERT INTO messages (id, sender_id, receiver_id, group_id, content,  created_at, updated_at, deleted_at )
@@ -267,7 +270,7 @@ const insertPrivateMessage = async (
   RETURNING created_at as "createdAt"
 
   `,
-    { raw: true, nest: true, model: Message }
+    { raw: true, nest: true, type: QueryTypes.SELECT }
   );
 
 export const listLastMessage = async (
@@ -384,17 +387,26 @@ export const sendMessageGroup = async (
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
   const { id, firstName } = client;
-  const { groupId, content, messageId } = parsedMessage.params;
-  const data: ParramsResultSuccessResponse = {
-    item: { message: content, senderName: firstName },
-  };
-
+  const { groupId, content, messageId, groupName } = parsedMessage.params;
   await checkUserGroup(id, groupId);
-  insertMessageGroup(id, groupId, content, messageId);
 
+  const result = await insertMessageGroup(id, groupId, content, messageId);
+
+  const data: ParramsResultSuccessResponse = {
+    item: {
+      groupId,
+      groupName,
+      messageId,
+      message: content,
+      senderName: firstName,
+      senderId: id,
+      createdAt: (await result[0]).createdAt,
+    },
+    isBroadcast: true,
+  };
   const usersInGroup = await selectUsersGroup(groupId);
-  const userIds: string[] = transformArrUserGroup(usersInGroup);
 
+  const userIds: string[] = transformArrUserGroup(usersInGroup);
   sendingMessages(userIds, userConnections, id, data, MESSAGE_IN_GROUP);
 
   return {};
@@ -417,7 +429,7 @@ export const sendPrivateMessage = async (
       message: content,
       senderName: firstName,
       senderId: id,
-      createdAt: result[0].createdAt,
+      createdAt: (await result[0]).createdAt,
     },
     isBroadcast: true,
   };
