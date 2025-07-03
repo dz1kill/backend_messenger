@@ -258,17 +258,17 @@ const insertPrivateMessage = async (
   receiverId: string,
   content: string,
   messageId: string
-) => {
+) =>
   await sequelize.query(
     `
   
   INSERT INTO messages (id, sender_id, receiver_id, group_id, content,  created_at, updated_at, deleted_at )
   VALUES ('${messageId}', '${senderId}', '${receiverId}', NULL, '${content}' ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+  RETURNING created_at as "createdAt"
 
   `,
-    { model: Message }
+    { raw: true, nest: true, model: Message }
   );
-};
 
 export const listLastMessage = async (
   parseMessage: ReqMessageDTO<ParramListLastMessage>,
@@ -333,8 +333,10 @@ export const addUserInGroup = async (
   const { id, email, firstName } = client;
   const { groupId, userId } = parsedMessage.params;
   const data: ParramsResultSuccessResponse = {
-    message: `User #${email} added in group.`,
-    senderName: firstName,
+    item: {
+      message: `User #${email} added in group.`,
+      senderName: firstName,
+    },
   };
 
   await checkUserGroup(id, groupId);
@@ -359,8 +361,10 @@ export const leaveGroup = async (
   const { id, email, firstName } = client;
   const { groupId } = parsedMessage.params;
   const data: ParramsResultSuccessResponse = {
-    message: `User ${email} has left the group.`,
-    senderName: firstName,
+    item: {
+      message: `User ${email} has leave the group.`,
+      senderName: firstName,
+    },
   };
 
   await checkUserGroup(id, groupId);
@@ -382,8 +386,7 @@ export const sendMessageGroup = async (
   const { id, firstName } = client;
   const { groupId, content, messageId } = parsedMessage.params;
   const data: ParramsResultSuccessResponse = {
-    message: content,
-    senderName: firstName,
+    item: { message: content, senderName: firstName },
   };
 
   await checkUserGroup(id, groupId);
@@ -405,12 +408,20 @@ export const sendPrivateMessage = async (
   const { id, firstName } = client;
   const { receiverId, content, messageId } = parsedMessage.params;
   const receiverIdArr = [receiverId];
+
+  const result = await insertPrivateMessage(id, receiverId, content, messageId);
+
   const data: ParramsResultSuccessResponse = {
-    message: content,
-    senderName: firstName,
+    item: {
+      messageId,
+      message: content,
+      senderName: firstName,
+      senderId: id,
+      createdAt: result[0].createdAt,
+    },
+    isBroadcast: true,
   };
 
-  await insertPrivateMessage(id, receiverId, content, messageId);
   sendingMessages(receiverIdArr, userConnections, id, data, PRIVATE_MESSAGE);
 
   return {};

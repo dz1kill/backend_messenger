@@ -38,5 +38,6 @@ export async function authorizationUser(emailUser: string, password: string) {
     statusCode: 201,
     id: findUser.id,
     email: findUser.email,
+    firstName: findUser.firstName,
   };
 }

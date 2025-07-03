@@ -58,9 +58,9 @@ export type ParamsType = ParramListLastMessage &
   ParramPrivateMessage;
 
 export type ParramsResultSuccessResponse = {
+  item?: {} | null;
   data?: ParramsResData | null;
-  message?: string | null;
-  senderName?: string | null;
+  isBroadcast?: boolean;
 };
 
 export type ParamsBuildSuccessResponse = {

@@ -118,9 +118,9 @@ export const buildSuccessResponse = (
     type,
     success: true,
     params: {
+      item: params.item || null,
       data: params.data || null,
-      message: params.message || null,
-      senderName: params.senderName || null,
+      isBroadcast: params.isBroadcast || false,
     },
   };
   ws.send(JSON.stringify(buildResponse));

@@ -29,6 +29,7 @@ export async function authorization(
       email: result.email,
       message: result.message,
       token: result.token,
+      firstName: result.firstName,
     });
   } catch (error) {
     res

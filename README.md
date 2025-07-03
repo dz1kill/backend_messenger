@@ -49,7 +49,7 @@ Response:
 
 ```js
 {
-    "type": "listLastMessage",
+    "type": "listLastMessageResponse",
     "success": true,
     "params": {
         "data": [
@@ -68,8 +68,8 @@ Response:
             },
             // other chats
         ],
-        "message": null,
-        "senderName": null
+        "isBroadcast": false
+        "item":null
     }
 }
 
@@ -95,7 +95,7 @@ Response:
 
 ```js
 {
-    "type": "getlatestMessageDialog",
+    "type": "getlatestMessageDialogResponse",
     "success": true,
     "params": {
         "data": [
@@ -110,8 +110,8 @@ Response:
             },
             // other messages
         ],
-        "message": null,
-        "senderName": null
+         "isBroadcast": false,
+         "item":null
     }
 }
 
@@ -137,7 +137,7 @@ Response:
 
 ```js
 {
-    "type": "getlatestMessageGroup",
+    "type": "getlatestMessageGroupResponse",
     "success": true,
     "params": {
         "data": [
@@ -152,8 +152,8 @@ Response:
             },
             // other messages
         ],
-        "message": null,
-        "senderName": null
+         "isBroadcast": false,
+         "item":null
     }
 }
 ```
@@ -177,12 +177,12 @@ Response:
 
 ```js
 {
-    "type": "newGroup",
+    "type": "newGroupResponse",
     "success": true,
     "params": {
-        "data": null
-        "message": null,
-        "senderName": null
+        "data": null,
+        "isBroadcast": false,
+        "item":null
     }
 }
 ```
@@ -206,12 +206,12 @@ Response:
 
 ```js
 {
-    "type": "addUserInGroup",
+    "type": "addUserInGroupResponse",
     "success": true,
     "params": {
-        "data": null
-        "message": null,
-        "senderName": null
+        "data": null,
+        "isBroadcast": false,
+        "item":null
     }
 }
 ```
@@ -234,12 +234,12 @@ Response:
 
 ```js
 {
-    "type": "leaveGroup",
+    "type": "leaveGroupResponse",
     "success": true,
     "params": {
-        "data": null
-        "message": null,
-        "senderName": null
+        "data": null,
+        "isBroadcast": false,
+        "item":null
     }
 }
 ```
@@ -264,12 +264,12 @@ Response:
 
 ```js
 {
-    "type": "messageInGroup",
+    "type": "messageInGroupResponse",
     "success": true,
     "params": {
-        "data": null
-        "message": null,
-        "senderName": null
+        "data": null,
+        "isBroadcast": false,
+        "item":null
     }
 }
 ```
@@ -297,9 +297,26 @@ Response:
     "type": "privateMessage",
     "success": true,
     "params": {
-        "data": null
-        "message": null,
-        "senderName": null
+        "item": {
+            "message": "lol",
+            "senderName": "Bob"
+        },
+        "data": null,
+        "isBroadcast": false
+    }
+}
+```
+
+Response:
+
+```js
+{
+    "type": "privateMessage",
+    "success": true,
+    "params": {
+        "item": null
+        "data": null,
+        "isBroadcast": true
     }
 }
 ```
@@ -314,8 +331,8 @@ Response:
     "success": true,
     "params": {
         "data": null,
-        "message": "Hi",
-        "senderName": "Patrick0"
+        "isBroadcast": true,
+        "item":null
     }
 }
 ```
