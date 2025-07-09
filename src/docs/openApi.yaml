@@ -183,11 +183,6 @@ components:
           pattern: "^\\S+$"
           description: User last name.
           example: Jordan
-        email:
-          type: string
-          pattern: "^\\S+$"
-          description: New user email.
-          example: pete7833@examples.com
 
     changePasswordProfile:
       type: object

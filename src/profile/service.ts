@@ -3,24 +3,13 @@ import { checkPasswordUser, checkUniqueEmail, hashPassword } from "./helper";
 
 export async function updateUserData(
   userId: number,
-  newEmail: string,
   firstName: string,
   lastName: string
 ) {
-  let dataSave = {};
-  if (newEmail) {
-    await checkUniqueEmail(newEmail);
-    dataSave = {
-      email: newEmail,
-      firstName,
-      lastName,
-    };
-  } else {
-    dataSave = {
-      firstName,
-      lastName,
-    };
-  }
+  const dataSave = {
+    firstName,
+    lastName,
+  };
   await User.update(dataSave, { where: { id: userId } });
   return { message: "User updated.", statusCode: 201 };
 }

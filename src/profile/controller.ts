@@ -5,8 +5,8 @@ import { updatePasswordUser, updateUserData } from "./service";
 export async function updateUser(req: UpdateUserDTO, res) {
   try {
     const { id } = req.user;
-    const { email, firstName, lastName } = req.body;
-    const result = await updateUserData(id, email, firstName, lastName);
+    const { firstName, lastName } = req.body;
+    const result = await updateUserData(id, firstName, lastName);
     res.status(result.statusCode || 200).json({ message: result.message });
   } catch (error) {
     res
