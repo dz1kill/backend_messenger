@@ -28,12 +28,8 @@ export async function updateUserData(
 export async function updatePasswordUser(
   oldPassword: string,
   newPassword: string,
-  repeatNewPassword: string,
   userId: number
 ) {
-  if (!(newPassword === repeatNewPassword)) {
-    throw { message: "New passwords do not match", statusCode: 400 };
-  }
   const oneUser = await User.findOne({ where: { id: userId } });
   await checkPasswordUser(oldPassword, oneUser.password);
   const hashNewPassword = await hashPassword(newPassword);

@@ -85,7 +85,7 @@ paths:
         201:
           description: Password changed in database.
         400:
-          description: New passwords do not match or Wrong password.
+          description: Wrong password.
         401:
           description: Not authorized.
         500:
@@ -195,7 +195,6 @@ components:
       required:
         - oldPassword
         - newPassword
-        - repeatNewPassword
       properties:
         oldPassword:
           type: string
@@ -206,9 +205,4 @@ components:
           type: string
           pattern: "^\\S+$"
           description: New user password
-          example: "12345"
-        repeatNewPassword:
-          type: string
-          pattern: "^\\S+$"
-          description: Repeat new user password
           example: "12345"

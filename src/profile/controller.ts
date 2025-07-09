@@ -18,11 +18,11 @@ export async function updateUser(req: UpdateUserDTO, res) {
 export async function updatePassword(req: UpdatePasswordDTO, res) {
   try {
     const { id } = req.user;
-    const { oldPassword, newPassword, repeatNewPassword } = req.body;
+    const { oldPassword, newPassword } = req.body;
     const result = await updatePasswordUser(
       oldPassword,
       newPassword,
-      repeatNewPassword,
+
       id
     );
     res.status(result.statusCode || 200).json({ message: result.message });
