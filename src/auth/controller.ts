@@ -30,6 +30,7 @@ export async function authorization(
       message: result.message,
       token: result.token,
       firstName: result.firstName,
+      lastName: result.lastName,
     });
   } catch (error) {
     res

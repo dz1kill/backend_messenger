@@ -39,5 +39,6 @@ export async function authorizationUser(emailUser: string, password: string) {
     id: findUser.id,
     email: findUser.email,
     firstName: findUser.firstName,
+    lastName: findUser.lastName,
   };
 }

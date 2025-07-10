@@ -164,6 +164,8 @@ last_messages AS (
     m.deleted_at,
     g.name AS "groupName", 
     u.first_name AS "senderName",
+    u.last_name AS "senderLastName",
+    r.last_name AS "receiverLastName",
     r.first_name AS "receiverName",
     CASE 
       WHEN m.group_id IS NOT NULL THEN 'group_' || m.group_id
@@ -187,8 +189,10 @@ SELECT
   id as "messageId", 
   sender_id AS "senderId", 
   "senderName", 
+  "senderLastName",
   receiver_id AS "receiverId", 
   "receiverName", 
+  "receiverLastName",
   group_id AS "groupId", 
   "groupName", 
   content,
@@ -211,6 +215,7 @@ const getDblatestMessageGroup = async (
       messages.id AS "messageId",
       messages.sender_id AS "senderId",
       users.first_name AS "senderName",
+      users.last_name AS "senderLastName",
       messages.group_id AS "groupId",
       groups.name AS "groupName",
       messages.content,
@@ -222,7 +227,7 @@ const getDblatestMessageGroup = async (
       messages.group_id = :groupId AND
       messages.deleted_at IS NULL
       ${cursorCreatedAt ? `AND messages.created_at < :cursorCreatedAt` : ""}
-    ORDER BY messages.created_at DESC  -- 🔥 Ключевое для пагинации!
+    ORDER BY messages.created_at DESC 
     LIMIT :limit
   `,
     {

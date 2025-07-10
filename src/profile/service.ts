@@ -1,5 +1,5 @@
 import { User } from "../models/user";
-import { checkPasswordUser, checkUniqueEmail, hashPassword } from "./helper";
+import { checkPasswordUser, hashPassword } from "./helper";
 
 export async function updateUserData(
   userId: number,
