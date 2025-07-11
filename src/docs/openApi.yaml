@@ -106,14 +106,38 @@ paths:
         500:
           description: Server error.
 
-  /users/list:
+  /use-cases/find-all:
     get:
       tags:
-        - Users
+        - UseCases
       summary: List all users.
       responses:
         200:
           description: Succes.
+        500:
+          description: Server error.
+
+  /use-cases/search:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - UseCases
+      summary: Search users and group .
+      parameters:
+        - in: query
+          name: searchText
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: Search query string.
+      responses:
+        200:
+          description: Succes.
+        401:
+          description: Not authorized.
         500:
           description: Server error.
 
