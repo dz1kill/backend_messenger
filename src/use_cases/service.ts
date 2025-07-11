@@ -35,7 +35,7 @@ matched_groups AS (
         g.id AS "groupId",
         g.name AS "groupName"
     FROM groups g
-    WHERE g.id NOT IN (SELECT group_id FROM user_groups)
+    WHERE g.id IN (SELECT group_id FROM user_groups)
       AND LOWER(g.name) LIKE LOWER('%' || :search_text || '%')
 )
 

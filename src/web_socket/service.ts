@@ -428,7 +428,7 @@ export const sendPrivateMessage = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id, firstName } = client;
+  const { id, firstName, lastName } = client;
   const { receiverId, content, messageId } = parsedMessage.params;
   const receiverIdArr = [receiverId];
 
@@ -439,6 +439,7 @@ export const sendPrivateMessage = async (
       messageId,
       message: content,
       senderName: firstName,
+      senderLastName: lastName,
       senderId: id,
       createdAt: (await result[0]).createdAt,
     },

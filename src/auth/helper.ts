@@ -39,8 +39,13 @@ export async function checkPasswordUser(
   }
 }
 
-export function generateJwt(id: string, email: string, firstName: string) {
-  return jwt.sign({ id, email, firstName }, config.get("JWT.key"), {
+export function generateJwt(
+  id: string,
+  email: string,
+  firstName: string,
+  lastName: string
+) {
+  return jwt.sign({ id, email, firstName, lastName }, config.get("JWT.key"), {
     expiresIn: "24h",
   });
 }
