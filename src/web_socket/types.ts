@@ -104,6 +104,7 @@ export interface ResItemGroupMessage {
   messageId: string;
   message: string;
   senderName: string;
+  senderLastName: string;
   senderId: string;
   createdAt: string;
 }

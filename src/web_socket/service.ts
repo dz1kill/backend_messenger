@@ -397,7 +397,7 @@ export const sendMessageGroup = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id, firstName } = client;
+  const { id, firstName, lastName } = client;
   const { groupId, content, messageId, groupName } = parsedMessage.params;
   await checkUserGroup(id, groupId);
 
@@ -410,6 +410,7 @@ export const sendMessageGroup = async (
       messageId,
       message: content,
       senderName: firstName,
+      senderLastName: lastName,
       senderId: id,
       createdAt: (await result[0]).createdAt,
     },
