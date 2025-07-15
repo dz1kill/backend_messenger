@@ -282,7 +282,7 @@ components:
       required:
         - groupId
         - groupName
-        - content
+        - notificationMessage
         - messageId
       properties:
         groupId:
@@ -295,7 +295,7 @@ components:
           pattern: "^\\S+$"
           description: Group name
           example: "Travel"
-        content:
+        notificationMessage:
           type: string
           description: Notification message
           example: "Group create"

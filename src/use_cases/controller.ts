@@ -42,8 +42,14 @@ export async function markAsDeleted(req, res: express.Response) {
 export async function createGroup(req, res: express.Response) {
   try {
     const { id } = req.user;
-    const { groupName, groupId, content, messageId } = req.body;
-    const result = await newGroup(id, groupName, groupId, content, messageId);
+    const { groupName, groupId, notificationMessage, messageId } = req.body;
+    const result = await newGroup(
+      id,
+      groupName,
+      groupId,
+      notificationMessage,
+      messageId
+    );
 
     res.status(200).json(result);
   } catch (error) {

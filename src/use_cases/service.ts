@@ -137,13 +137,13 @@ export const newGroup = async (
   id: string,
   groupName: string,
   groupId: string,
-  content: string,
+  notificationMessage: string,
   messageId: string
 ) => {
   await sequelize.transaction(async (trx) => {
     await insertGroup(groupName, trx, groupId);
     await insertUserGroup(groupId, id, trx);
-    await insertMessageGroup(id, groupId, content, messageId, trx);
+    await insertMessageGroup(id, groupId, notificationMessage, messageId, trx);
   });
 
   return { statusCode: 200, message: "Create group succes" };
