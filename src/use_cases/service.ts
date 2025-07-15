@@ -1,5 +1,7 @@
 import sequelize from "../models";
-import { QueryTypes } from "sequelize";
+import { QueryTypes, Transaction } from "sequelize";
+import { Group } from "../models/group";
+import { UserGroup } from "../models/group_user";
 
 const searchUserAndGroup = async (userId: string, searchText: string) =>
   await sequelize.query(
@@ -74,6 +76,50 @@ const messageDeletionRepository = async (userId: string, companionId: string) =>
     }
   );
 
+const insertGroup = async (
+  groupName: string,
+  trx: Transaction,
+  groupId: string
+) =>
+  await sequelize.query(
+    `
+  INSERT INTO groups (id , name, created_at, updated_at, deleted_at )
+  VALUES ('${groupId}','${groupName}',CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+  RETURNING id;
+  `,
+    { raw: true, nest: true, model: Group, transaction: trx }
+  );
+
+const insertMessageGroup = async (
+  senderId: string,
+  groupId: string,
+  content: string,
+  messageId: string,
+  trx: Transaction
+) =>
+  await sequelize.query<Promise<{ createdAt: string } | null>>(
+    `
+    INSERT INTO messages (id, sender_id, receiver_id, group_id, content,  created_at, updated_at, deleted_at )
+    VALUES ('${messageId}', '${senderId}', NULL, '${groupId}', '${content}' ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+    RETURNING created_at as "createdAt"
+  
+    `,
+    { raw: true, nest: true, type: QueryTypes.SELECT, transaction: trx }
+  );
+
+const insertUserGroup = async (
+  groupId: string,
+  userId: string,
+  trx: Transaction
+) =>
+  await sequelize.query(
+    `
+    INSERT INTO users_groups (group_id, user_id)
+    VALUES ('${groupId}', '${userId}')
+   `,
+    { model: UserGroup, transaction: trx }
+  );
+
 export async function findUserAndGroup(id: string, searchText: string) {
   const result = await searchUserAndGroup(id, searchText);
   return { data: result };
@@ -86,3 +132,19 @@ export async function markMessageAsDeleted(
   await messageDeletionRepository(userId, companionId);
   return { message: "User's messages have been deleted" };
 }
+
+export const newGroup = async (
+  id: string,
+  groupName: string,
+  groupId: string,
+  content: string,
+  messageId: string
+) => {
+  await sequelize.transaction(async (trx) => {
+    await insertGroup(groupName, trx, groupId);
+    await insertUserGroup(groupId, id, trx);
+    await insertMessageGroup(id, groupId, content, messageId, trx);
+  });
+
+  return { statusCode: 200, message: "Create group succes" };
+};

@@ -7,7 +7,6 @@ import {
   ParramLeaveGroup,
   ParramListLastMessage,
   ParramMessageGroup,
-  ParramNewGroup,
   ParramPrivateMessage,
   ParramsResultSuccessResponse,
   ReqMessageDTO,
@@ -16,7 +15,6 @@ import {
   ResDataListLastMessage,
 } from "./types";
 import { UserGroup } from "../models/group_user";
-import { Group } from "../models/group";
 import WebSocket from "ws";
 import { buildSuccessResponse, transformArrUserGroup } from "./helper";
 import { QueryTypes, Transaction } from "sequelize";
@@ -39,20 +37,6 @@ const checkUserGroup = async (userId: string, groupId: string) => {
     throw { message: "User is not a member of this group" };
   }
 };
-
-const insertGroup = async (
-  groupName: string,
-  trx: Transaction,
-  groupId: string
-) =>
-  await sequelize.query(
-    `
-INSERT INTO groups (id , name, created_at, updated_at, deleted_at )
-VALUES ('${groupId}','${groupName}',CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
-RETURNING id;
-`,
-    { raw: true, nest: true, model: Group, transaction: trx }
-  );
 
 const insertUserGroup = async (
   groupId: string,
@@ -336,21 +320,6 @@ export const latestMessageGroup = async (
   const result = await getDblatestMessageGroup(groupId, limit, cursorCreatedAt);
 
   return { data: result };
-};
-
-export const newGroup = async (
-  parsedMessage: ReqMessageDTO<ParramNewGroup>,
-  client: JwtPayload
-) => {
-  const { id } = client;
-  const { groupName, groupId } = parsedMessage.params;
-
-  await sequelize.transaction(async (trx) => {
-    await insertGroup(groupName, trx, groupId);
-    await insertUserGroup(groupId, id, trx);
-  });
-
-  return {};
 };
 
 export const addUserInGroup = async (

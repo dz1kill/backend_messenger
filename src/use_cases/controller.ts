@@ -1,6 +1,6 @@
 import { User } from "../models/user";
 import * as express from "express";
-import { findUserAndGroup, markMessageAsDeleted } from "./service";
+import { findUserAndGroup, markMessageAsDeleted, newGroup } from "./service";
 
 export async function findAllUser(req, res: express.Response) {
   try {
@@ -31,6 +31,20 @@ export async function markAsDeleted(req, res: express.Response) {
     const { id } = req.user;
     const { companionId } = req.body;
     const result = await markMessageAsDeleted(id, companionId);
+    res.status(200).json(result);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Server error" });
+  }
+}
+
+export async function createGroup(req, res: express.Response) {
+  try {
+    const { id } = req.user;
+    const { groupName, groupId, content, messageId } = req.body;
+    const result = await newGroup(id, groupName, groupId, content, messageId);
+
     res.status(200).json(result);
   } catch (error) {
     res

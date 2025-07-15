@@ -170,6 +170,27 @@ paths:
         500:
           description: Server error.
 
+  /use-cases/create-group:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - UseCases
+      summary: Create new group.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/createGroup"
+      responses:
+        200:
+          description: Create group succes.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
 components:
   securitySchemes:
     bearerAuth:
@@ -254,3 +275,31 @@ components:
           pattern: "^\\S+$"
           description: New user password
           example: "12345"
+
+    createGroup:
+      type: object
+      additionalProperties: false
+      required:
+        - groupId
+        - groupName
+        - content
+        - messageId
+      properties:
+        groupId:
+          type: string
+          pattern: "^\\S+$"
+          description: id in uuid format
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        groupName:
+          type: string
+          pattern: "^\\S+$"
+          description: Group name
+          example: "Travel"
+        content:
+          type: string
+          description: Notification message
+          example: "Group create"
+        messageId:
+          type: string
+          description: id in uuid format
+          example: "123e4567-e89b-12d3-a456-426614174000"

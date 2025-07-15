@@ -35,14 +35,6 @@ export const latestMessagesGroupSchema = z.object({
   }),
 });
 
-export const newGroupSchema = z.object({
-  type: z.string(),
-  params: z.object({
-    groupId: z.string().uuid(),
-    groupName: z.string(),
-  }),
-});
-
 export const addUserInGroupSchema = z.object({
   type: z.string(),
   params: z.object({

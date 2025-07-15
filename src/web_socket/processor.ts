@@ -7,7 +7,6 @@ import {
   leaveGroup,
   listLastMessage,
   sendMessageGroup,
-  newGroup,
   sendPrivateMessage,
 } from "./service";
 import {
@@ -19,7 +18,6 @@ import {
   latestMessagesGroupSchema,
   leaveGroupSchema,
   listLastMessageSchema,
-  newGroupSchema,
   privateMessageSchema,
   validateByZod,
 } from "./helper";
@@ -31,7 +29,6 @@ import {
   LEAVE_GROUP,
   LIST_LAST_MESSAGE,
   MESSAGE_IN_GROUP,
-  NEW_GROUP,
   PRIVATE_MESSAGE,
 } from "./constants";
 
@@ -71,16 +68,6 @@ export const processor = async (
         buildSuccessResponse(ws, result, GET_LATEST_MESSAGE_GROUP);
       } catch (error) {
         buildErrorResponse(ws, error, GET_LATEST_MESSAGE_GROUP);
-      }
-      break;
-
-    case NEW_GROUP:
-      try {
-        validateByZod(parsedMessage, newGroupSchema);
-        const result = await newGroup(parsedMessage, client);
-        buildSuccessResponse(ws, result, NEW_GROUP);
-      } catch (error) {
-        buildErrorResponse(ws, error, NEW_GROUP);
       }
       break;
 
