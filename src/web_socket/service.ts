@@ -113,6 +113,10 @@ LEFT JOIN users AS sender ON sender.id = messages.sender_id
 LEFT JOIN users AS receiver ON receiver.id = messages.receiver_id
 WHERE (sender_id = '${senderId}' AND receiver_id = '${receiverId}'
     OR sender_id = '${receiverId}' AND receiver_id = '${senderId}')
+      AND (
+    messages.deleted_by_users IS NULL 
+    OR NOT messages.deleted_by_users @> ARRAY['${senderId}'::uuid]
+  )
 ${
   cursorCreatedAt
     ? `AND messages.created_at < TIMESTAMP '${cursorCreatedAt}'`
@@ -143,6 +147,16 @@ const getDblistLastMessage = async (
     (sender_id = '${userId}' OR receiver_id = '${userId}' OR group_id IN (
       SELECT group_id FROM users_groups WHERE user_id = '${userId}'
     ))
+          AND (
+      group_id IS NOT NULL -- Групповые чаты пропускаем
+      OR (
+        group_id IS NULL -- Личные чаты
+        AND (
+          deleted_by_users IS NULL 
+          OR NOT deleted_by_users @> ARRAY['${userId}'::uuid]
+        )
+      )
+    )
   GROUP BY conversation_id
   ${
     cursorCreatedAt
