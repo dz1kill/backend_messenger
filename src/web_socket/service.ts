@@ -148,9 +148,9 @@ const getDblistLastMessage = async (
       SELECT group_id FROM users_groups WHERE user_id = '${userId}'
     ))
           AND (
-      group_id IS NOT NULL -- Групповые чаты пропускаем
+      group_id IS NOT NULL
       OR (
-        group_id IS NULL -- Личные чаты
+        group_id IS NULL 
         AND (
           deleted_by_users IS NULL 
           OR NOT deleted_by_users @> ARRAY['${userId}'::uuid]
