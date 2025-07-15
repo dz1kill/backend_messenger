@@ -8,6 +8,12 @@ module.exports = {
         allowNull: false,
       },
 
+      deleted_by_users: {
+        type: Sequelize.ARRAY(Sequelize.UUID),
+        allowNull: true,
+        defaultValue: [],
+      },
+
       sender_id: {
         type: Sequelize.UUID,
         onDelete: "CASCADE",

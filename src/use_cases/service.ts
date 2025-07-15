@@ -53,7 +53,36 @@ SELECT * FROM matched_groups; `,
     }
   );
 
+const messageDeletionRepository = async (userId: string, companionId: string) =>
+  await sequelize.query(
+    `
+    UPDATE messages
+    SET deleted_by_users = array_append(deleted_by_users, :user_id)
+    WHERE 
+      (sender_id = :user_id AND receiver_id = :companion_id)
+      OR 
+      (sender_id = :companion_id AND receiver_id = :user_id) 
+      AND 
+      NOT (:user_id = ANY(deleted_by_users))
+    RETURNING *`,
+    {
+      replacements: {
+        user_id: userId,
+        companion_id: companionId,
+      },
+      type: QueryTypes.UPDATE,
+    }
+  );
+
 export async function findUserAndGroup(id: string, searchText: string) {
   const result = await searchUserAndGroup(id, searchText);
   return { data: result };
+}
+
+export async function markMessageAsDeleted(
+  userId: string,
+  companionId: string
+) {
+  await messageDeletionRepository(userId, companionId);
+  return { message: "User's messages have been deleted" };
 }

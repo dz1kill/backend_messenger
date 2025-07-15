@@ -19,11 +19,18 @@ import { UUID } from "crypto";
 })
 export class Message extends Model {
   @Column({
-    type: DataType.UUIDV4(),
+    type: DataType.UUID(),
     primaryKey: true,
     autoIncrement: true,
   })
   id: UUID;
+
+  @Column({
+    type: DataType.ARRAY(DataType.UUID),
+    allowNull: true,
+    defaultValue: [],
+  })
+  deletedByUsers: string[];
 
   @ForeignKey(() => User)
   @Column({

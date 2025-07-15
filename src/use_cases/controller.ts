@@ -1,6 +1,6 @@
 import { User } from "../models/user";
 import * as express from "express";
-import { findUserAndGroup } from "./service";
+import { findUserAndGroup, markMessageAsDeleted } from "./service";
 
 export async function findAllUser(req, res: express.Response) {
   try {
@@ -18,6 +18,19 @@ export async function searchUserAndGroup(req, res: express.Response) {
     const { id } = req.user;
     const { searchText } = req.query;
     const result = await findUserAndGroup(id, searchText);
+    res.status(200).json(result);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Server error" });
+  }
+}
+
+export async function markAsDeleted(req, res: express.Response) {
+  try {
+    const { id } = req.user;
+    const { companionId } = req.body;
+    const result = await markMessageAsDeleted(id, companionId);
     res.status(200).json(result);
   } catch (error) {
     res
