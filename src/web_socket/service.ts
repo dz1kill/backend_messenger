@@ -210,6 +210,7 @@ const getDblatestMessageGroup = async (
   await sequelize.query<ResDataLatestMessageGroup>(
     `
     SELECT
+      messages.notification,
       messages.id AS "messageId",
       messages.sender_id AS "senderId",
       users.first_name AS "senderName",

@@ -65,6 +65,11 @@ export class Message extends Model {
   })
   content: string;
 
+  @Column({
+    type: DataType.BOOLEAN(),
+  })
+  notification: string;
+
   @HasMany(() => Image)
   images: Image[];
 }

@@ -14,6 +14,10 @@ module.exports = {
         defaultValue: [],
       },
 
+      notification: {
+        type: Sequelize.BOOLEAN,
+      },
+
       sender_id: {
         type: Sequelize.UUID,
         onDelete: "CASCADE",

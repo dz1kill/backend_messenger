@@ -95,12 +95,13 @@ const insertMessageGroup = async (
   groupId: string,
   content: string,
   messageId: string,
+  notification: boolean,
   trx: Transaction
 ) =>
   await sequelize.query<Promise<{ createdAt: string } | null>>(
     `
-    INSERT INTO messages (id, sender_id, receiver_id, group_id, content,  created_at, updated_at, deleted_at )
-    VALUES ('${messageId}', '${senderId}', NULL, '${groupId}', '${content}' ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+    INSERT INTO messages (id, sender_id, receiver_id, group_id, content, notification,  created_at, updated_at, deleted_at )
+    VALUES ('${messageId}', '${senderId}', NULL, '${groupId}', '${content}', ${notification}  ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
     RETURNING created_at as "createdAt"
   
     `,
@@ -143,7 +144,14 @@ export const newGroup = async (
   await sequelize.transaction(async (trx) => {
     await insertGroup(groupName, trx, groupId);
     await insertUserGroup(groupId, id, trx);
-    await insertMessageGroup(id, groupId, notificationMessage, messageId, trx);
+    await insertMessageGroup(
+      id,
+      groupId,
+      notificationMessage,
+      messageId,
+      true,
+      trx
+    );
   });
 
   return { statusCode: 200, message: "Create group succes" };

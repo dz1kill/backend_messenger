@@ -207,7 +207,6 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await queryInterface.bulkDelete("images", null);
     await queryInterface.bulkDelete("messages", null);
     await queryInterface.bulkDelete("users_groups", null);
     await queryInterface.bulkDelete("groups", null);
