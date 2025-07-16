@@ -47,6 +47,9 @@ export const leaveGroupSchema = z.object({
   type: z.string(),
   params: z.object({
     groupId: z.string().uuid(),
+    message: z.string(),
+    messageId: z.string().uuid(),
+    groupName: z.string(),
   }),
 });
 

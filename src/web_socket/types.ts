@@ -33,6 +33,9 @@ export type ParramAddUserInGroup = {
 
 export type ParramLeaveGroup = {
   groupId: string;
+  message: string;
+  messageId: string;
+  groupName: string;
 };
 
 export type ParramMessageGroup = {
@@ -54,7 +57,8 @@ export type ParamsType = ParramListLastMessage &
   ParramNewGroup &
   ParramAddUserInGroup &
   ParramMessageGroup &
-  ParramPrivateMessage;
+  ParramPrivateMessage &
+  ParramLeaveGroup;
 
 export interface ResDataListLastMessage {
   messageId: string;

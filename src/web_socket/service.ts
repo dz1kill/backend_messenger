@@ -127,20 +127,22 @@ const getDblistLastMessage = async (
     END AS conversation_id,
     MAX(messages.created_at) AS last_message_time
   FROM messages
-  WHERE 
-    (sender_id = '${userId}' OR receiver_id = '${userId}' OR group_id IN (
-      SELECT group_id FROM users_groups WHERE user_id = '${userId}'
-    ))
-          AND (
-      group_id IS NOT NULL
+  WHERE
+      (
+      (group_id IS NULL AND (
+        sender_id = '${userId}' OR receiver_id = '${userId}'
+      ) AND (
+        deleted_by_users IS NULL 
+        OR NOT deleted_by_users @> ARRAY['${userId}'::uuid]
+      ))
       OR (
-        group_id IS NULL 
-        AND (
-          deleted_by_users IS NULL 
-          OR NOT deleted_by_users @> ARRAY['${userId}'::uuid]
+        group_id IS NOT NULL
+        AND group_id IN (
+          SELECT group_id FROM users_groups WHERE user_id = '${userId}'
         )
       )
     )
+
   GROUP BY conversation_id
   ${
     cursorCreatedAt
@@ -254,12 +256,13 @@ const insertMessageGroup = async (
   senderId: string,
   groupId: string,
   content: string,
-  messageId: string
+  messageId: string,
+  notification: boolean
 ) =>
   await sequelize.query<Promise<{ createdAt: string } | null>>(
     `
-  INSERT INTO messages (id, sender_id, receiver_id, group_id, content,  created_at, updated_at, deleted_at )
-  VALUES ('${messageId}', '${senderId}', NULL, '${groupId}', '${content}' ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+  INSERT INTO messages (id, sender_id, receiver_id, group_id, content, notification, created_at, updated_at, deleted_at )
+  VALUES ('${messageId}', '${senderId}', NULL, '${groupId}', '${content}', ${notification} ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
   RETURNING created_at as "createdAt"
 
   `,
@@ -356,17 +359,35 @@ export const leaveGroup = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id, email, firstName } = client;
-  const { groupId } = parsedMessage.params;
-  const data: ParramsResultSuccessResponse = {
-    item: {
-      message: `User ${email} has leave the group.`,
-      senderName: firstName,
-    },
-  };
+  const notification = true;
+  const { id, firstName, lastName } = client;
+  const { groupId, message, messageId, groupName } = parsedMessage.params;
+  console.log("🚀 ~ parsedMessage.params:", parsedMessage.params);
 
   await checkUserGroup(id, groupId);
   await dropUserGroup(id, groupId);
+  const result = await insertMessageGroup(
+    id,
+    groupId,
+    message,
+    messageId,
+    notification
+  );
+
+  const data: ParramsResultSuccessResponse = {
+    item: {
+      groupId,
+      groupName,
+      messageId,
+      message,
+      senderName: firstName,
+      senderId: id,
+      senderLastName: lastName,
+      notification,
+      createdAt: (await result[0]).createdAt,
+    },
+    isBroadcast: true,
+  };
 
   const usersInGroup = await selectUsersGroup(groupId);
   const userIds: string[] = transformArrUserGroup(usersInGroup);
@@ -381,11 +402,18 @@ export const sendMessageGroup = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
+  const notification = false;
   const { id, firstName, lastName } = client;
   const { groupId, content, messageId, groupName } = parsedMessage.params;
   await checkUserGroup(id, groupId);
 
-  const result = await insertMessageGroup(id, groupId, content, messageId);
+  const result = await insertMessageGroup(
+    id,
+    groupId,
+    content,
+    messageId,
+    notification
+  );
 
   const data: ParramsResultSuccessResponse = {
     item: {
@@ -395,6 +423,7 @@ export const sendMessageGroup = async (
       message: content,
       senderName: firstName,
       senderLastName: lastName,
+      notification,
       senderId: id,
       createdAt: (await result[0]).createdAt,
     },
