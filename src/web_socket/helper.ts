@@ -59,6 +59,7 @@ export const MessageInGroupSchema = z.object({
     messageId: z.string().uuid(),
     groupId: z.string().uuid(),
     content: z.string(),
+    groupName: z.string(),
   }),
 });
 
