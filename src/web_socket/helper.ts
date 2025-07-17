@@ -72,6 +72,13 @@ export const privateMessageSchema = z.object({
   }),
 });
 
+export const dropGroupSchema = z.object({
+  type: z.string(),
+  params: z.object({
+    groupId: z.string().uuid(),
+  }),
+});
+
 export const parseBufferToJson = (rawMessageBuff: Buffer) => {
   const rawMessage = rawMessageBuff.toString();
   return JSON.parse(rawMessage);

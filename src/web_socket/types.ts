@@ -51,6 +51,8 @@ export type ParramPrivateMessage = {
   content: string;
 };
 
+export type ParramDropGroup = { groupId: string };
+
 export type ParamsType = ParramListLastMessage &
   ParramLastMessagesDialog &
   ParramLastMessagesGroup &
@@ -58,6 +60,7 @@ export type ParamsType = ParramListLastMessage &
   ParramAddUserInGroup &
   ParramMessageGroup &
   ParramPrivateMessage &
+  ParramDropGroup &
   ParramLeaveGroup;
 
 export interface ResDataListLastMessage {

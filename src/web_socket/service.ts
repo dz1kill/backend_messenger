@@ -2,6 +2,7 @@ import { JwtPayload } from "jsonwebtoken";
 import sequelize from "../models";
 import {
   ParramAddUserInGroup,
+  ParramDropGroup,
   ParramLastMessagesDialog,
   ParramLastMessagesGroup,
   ParramLeaveGroup,
@@ -20,6 +21,7 @@ import { buildSuccessResponse, transformArrUserGroup } from "./helper";
 import { QueryTypes, Transaction } from "sequelize";
 import {
   ADD_USER_IN_GROUP,
+  DROP_GROUP,
   LEAVE_GROUP,
   MESSAGE_IN_GROUP,
   PRIVATE_MESSAGE,
@@ -362,7 +364,6 @@ export const leaveGroup = async (
   const notification = true;
   const { id, firstName, lastName } = client;
   const { groupId, message, messageId, groupName } = parsedMessage.params;
-  console.log("🚀 ~ parsedMessage.params:", parsedMessage.params);
 
   await checkUserGroup(id, groupId);
   await dropUserGroup(id, groupId);
@@ -394,7 +395,7 @@ export const leaveGroup = async (
 
   sendingMessages(userIds, userConnections, id, data, LEAVE_GROUP);
 
-  return {};
+  return { item: { groupId } };
 };
 
 export const sendMessageGroup = async (
@@ -463,4 +464,37 @@ export const sendPrivateMessage = async (
   sendingMessages(receiverIdArr, userConnections, id, data, PRIVATE_MESSAGE);
 
   return {};
+};
+
+const dropGroupDB = async (groupId: string) => {
+  await sequelize.query(
+    `
+   DELETE FROM groups WHERE id = '${groupId}';
+    `,
+    { model: UserGroup }
+  );
+};
+
+export const deleteGroup = async (
+  parsedMessage: ReqMessageDTO<ParramDropGroup>,
+  client: JwtPayload,
+  userConnections: Map<JwtPayload, WebSocket>
+) => {
+  const { id } = client;
+  const { groupId } = parsedMessage.params;
+  await checkUserGroup(id, groupId);
+
+  const data: ParramsResultSuccessResponse = {
+    item: {
+      groupId,
+    },
+    isBroadcast: true,
+  };
+
+  const usersInGroup = await selectUsersGroup(groupId);
+  const userIds: string[] = transformArrUserGroup(usersInGroup);
+  await dropGroupDB(groupId);
+  sendingMessages(userIds, userConnections, id, data, DROP_GROUP);
+
+  return { item: { groupId } };
 };

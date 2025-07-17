@@ -2,6 +2,7 @@ import { JwtPayload } from "jsonwebtoken";
 import WebSocket from "ws";
 import {
   addUserInGroup,
+  deleteGroup,
   latestMessageDialog,
   latestMessageGroup,
   leaveGroup,
@@ -14,6 +15,7 @@ import {
   addUserInGroupSchema,
   buildErrorResponse,
   buildSuccessResponse,
+  dropGroupSchema,
   latestMessagesDialogSchema,
   latestMessagesGroupSchema,
   leaveGroupSchema,
@@ -24,6 +26,7 @@ import {
 import { ParamsType, ReqMessageDTO } from "./types";
 import {
   ADD_USER_IN_GROUP,
+  DROP_GROUP,
   GET_LATEST_MESSAGE_DIALOG,
   GET_LATEST_MESSAGE_GROUP,
   LEAVE_GROUP,
@@ -122,6 +125,21 @@ export const processor = async (
         buildSuccessResponse(ws, result, PRIVATE_MESSAGE);
       } catch (error) {
         buildErrorResponse(ws, error, PRIVATE_MESSAGE);
+      }
+
+      break;
+
+    case DROP_GROUP:
+      try {
+        validateByZod(parsedMessage, dropGroupSchema);
+        const result = await deleteGroup(
+          parsedMessage,
+          client,
+          userConnections
+        );
+        buildSuccessResponse(ws, result, DROP_GROUP);
+      } catch (error) {
+        buildErrorResponse(ws, error, DROP_GROUP);
       }
 
       break;
