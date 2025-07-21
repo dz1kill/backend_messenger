@@ -6,9 +6,7 @@ import { UserGroup } from "../models/group_user";
 const searchUserAndGroup = async (userId: string, searchText: string) =>
   await sequelize.query(
     `WITH user_groups AS (
-    SELECT group_id
-    FROM users_groups  -- Опечатка? Было users_groups или users_roups?
-    WHERE user_id = :current_user_id
+    SELECT group_id FROM users_groups WHERE user_id = :current_user_id
 ),
 
 matched_users AS (
@@ -17,8 +15,15 @@ matched_users AS (
         u.first_name AS "firstName",
         u.last_name AS "lastName",
         u.email,
-        CAST(NULL AS UUID) AS "groupId",
-        NULL AS "groupName"
+        NULL::UUID AS "groupId",
+        NULL AS "groupName",
+        CASE
+            WHEN LOWER(u.first_name) LIKE LOWER(:search_text || '%') THEN 1
+            WHEN LOWER(u.last_name) LIKE LOWER(:search_text || '%') THEN 2
+            WHEN LOWER(u.first_name) LIKE LOWER('%' || :search_text || '%') THEN 3
+            WHEN LOWER(u.last_name) LIKE LOWER('%' || :search_text || '%') THEN 4
+            ELSE 5
+        END AS priority
     FROM users u
     WHERE u.id != :current_user_id
       AND (
@@ -30,12 +35,13 @@ matched_users AS (
 
 matched_groups AS (
     SELECT 
-        CAST(NULL AS UUID) AS "userId",
+        NULL::UUID AS "userId",
         NULL AS "firstName",
         NULL AS "lastName",
         NULL AS email,
         g.id AS "groupId",
-        g.name AS "groupName"
+        g.name AS "groupName",
+        CASE WHEN LOWER(g.name) LIKE LOWER(:search_text || '%') THEN 1 ELSE 2 END AS priority
     FROM groups g
     WHERE g.id IN (SELECT group_id FROM user_groups)
       AND LOWER(g.name) LIKE LOWER('%' || :search_text || '%')
@@ -43,7 +49,9 @@ matched_groups AS (
 
 SELECT * FROM matched_users
 UNION ALL
-SELECT * FROM matched_groups; `,
+SELECT * FROM matched_groups
+ORDER BY priority, "firstName", "lastName", "groupName";
+`,
     {
       replacements: {
         current_user_id: userId,
