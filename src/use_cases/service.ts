@@ -129,6 +129,42 @@ const insertUserGroup = async (
     { model: UserGroup, transaction: trx }
   );
 
+const findByNameOrEmail = async (userId: string, searchText: string) =>
+  await sequelize.query(
+    `
+        SELECT 
+            u.id AS "userId",
+            u.first_name AS "firstName",
+            u.last_name AS "lastName",
+            u.email,
+            CASE
+                WHEN LOWER(u.first_name) LIKE LOWER(:search_text || '%') THEN 1
+                WHEN LOWER(u.last_name) LIKE LOWER(:search_text || '%') THEN 2
+                WHEN LOWER(u.first_name) LIKE LOWER('%' || :search_text || '%') THEN 3
+                WHEN LOWER(u.last_name) LIKE LOWER('%' || :search_text || '%') THEN 4
+                WHEN LOWER(u.email) LIKE LOWER('%' || :search_text || '%') THEN 5
+                ELSE 6
+            END AS priority
+        FROM users u
+        WHERE u.id != :current_user_id
+          AND (
+              LOWER(u.first_name) LIKE LOWER('%' || :search_text || '%')
+              OR LOWER(u.last_name) LIKE LOWER('%' || :search_text || '%')
+              OR LOWER(u.email) LIKE LOWER('%' || :search_text || '%')
+          )
+        ORDER BY priority, "firstName", "lastName";
+        `,
+    {
+      replacements: {
+        current_user_id: userId,
+        search_text: searchText,
+      },
+      type: QueryTypes.SELECT,
+      raw: true,
+      nest: true,
+    }
+  );
+
 export async function findUserAndGroup(id: string, searchText: string) {
   const result = await searchUserAndGroup(id, searchText);
   return { data: result };
@@ -164,3 +200,8 @@ export const newGroup = async (
 
   return { statusCode: 200, message: "Create group succes" };
 };
+
+export async function findUsersByNameOrEmail(id: string, searchText: string) {
+  const result = await findByNameOrEmail(id, searchText);
+  return { data: result };
+}

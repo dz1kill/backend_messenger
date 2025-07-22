@@ -5,6 +5,7 @@ import {
   findAllUser,
   markAsDeleted,
   searchUserAndGroup,
+  searchUsers,
 } from "./controller";
 import { authMiddleware } from "../middlewares/auth.middeleware";
 
@@ -13,3 +14,4 @@ useСases.get("/find-all", findAllUser);
 useСases.get("/search", authMiddleware, searchUserAndGroup);
 useСases.post("/mark-as-deleted", authMiddleware, markAsDeleted);
 useСases.post("/create-group", authMiddleware, createGroup);
+useСases.get("/search-users", authMiddleware, searchUsers);
