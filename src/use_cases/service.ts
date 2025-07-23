@@ -142,36 +142,47 @@ const insertUserGroup = async (
     { model: UserGroup, transaction: trx }
   );
 
-const findByNameOrEmail = async (userId: string, searchText: string) =>
+const findByNameOrEmail = async (
+  userId: string,
+  searchText: string,
+  groupId: string
+) =>
   await sequelize.query(
     `
-SELECT 
-    u.id AS "userId",
-    u.first_name AS "firstName",
-    u.last_name AS "lastName",
-    u.email
-FROM users u
-WHERE u.id != :current_user_id
-  AND (
-      LOWER(u.first_name) LIKE LOWER('%' || :search_text || '%')
-      OR LOWER(u.last_name) LIKE LOWER('%' || :search_text || '%')
-      OR LOWER(u.email) LIKE LOWER('%' || :search_text || '%')
-  )
-ORDER BY 
-    CASE
-        WHEN LOWER(u.first_name) LIKE LOWER(:search_text || '%') THEN 1
-        WHEN LOWER(u.last_name) LIKE LOWER(:search_text || '%') THEN 2
-        WHEN LOWER(u.first_name) LIKE LOWER('%' || :search_text || '%') THEN 3
-        WHEN LOWER(u.last_name) LIKE LOWER('%' || :search_text || '%') THEN 4
-        WHEN LOWER(u.email) LIKE LOWER('%' || :search_text || '%') THEN 5
-        ELSE 6
-    END,
-    "firstName", 
-    "lastName"; `,
+  SELECT 
+      u.id AS "userId",
+      u.first_name AS "firstName",
+      u.last_name AS "lastName",
+      u.email
+  FROM users u
+  WHERE u.id != :current_user_id
+    AND (
+        LOWER(u.first_name) LIKE LOWER('%' || :search_text || '%')
+        OR LOWER(u.last_name) LIKE LOWER('%' || :search_text || '%')
+        OR LOWER(u.email) LIKE LOWER('%' || :search_text || '%')
+    )
+    AND NOT EXISTS (
+        SELECT 1 
+        FROM users_groups ug 
+        WHERE ug.user_id = u.id 
+          AND ug.group_id = :group_id
+    )
+  ORDER BY 
+      CASE
+          WHEN LOWER(u.first_name) LIKE LOWER(:search_text || '%') THEN 1
+          WHEN LOWER(u.last_name) LIKE LOWER(:search_text || '%') THEN 2
+          WHEN LOWER(u.first_name) LIKE LOWER('%' || :search_text || '%') THEN 3
+          WHEN LOWER(u.last_name) LIKE LOWER('%' || :search_text || '%') THEN 4
+          WHEN LOWER(u.email) LIKE LOWER('%' || :search_text || '%') THEN 5
+          ELSE 6
+      END,
+      "firstName", 
+      "lastName"; `,
     {
       replacements: {
         current_user_id: userId,
         search_text: searchText,
+        group_id: groupId,
       },
       type: QueryTypes.SELECT,
       raw: true,
@@ -215,7 +226,11 @@ export const newGroup = async (
   return { statusCode: 200, message: "Create group succes" };
 };
 
-export async function findUsersByNameOrEmail(id: string, searchText: string) {
-  const result = await findByNameOrEmail(id, searchText);
+export async function findUsersByNameOrEmail(
+  id: string,
+  searchText: string,
+  groupId: string
+) {
+  const result = await findByNameOrEmail(id, searchText, groupId);
   return { data: result };
 }

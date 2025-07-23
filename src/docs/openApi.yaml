@@ -207,6 +207,12 @@ paths:
             minLength: 1
             maxLength: 100
           description: Search query string.
+        - in: query
+          name: groupId
+          required: true
+          schema:
+            type: string
+          description: Uuid key group.
       responses:
         200:
           description: Succes.

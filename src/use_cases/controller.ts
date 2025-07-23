@@ -67,8 +67,8 @@ export async function createGroup(req, res: express.Response) {
 export async function searchUsers(req, res: express.Response) {
   try {
     const { id } = req.user;
-    const { searchText } = req.query;
-    const result = await findUsersByNameOrEmail(id, searchText);
+    const { searchText, groupId } = req.query;
+    const result = await findUsersByNameOrEmail(id, searchText, groupId);
     res.status(200).json(result);
   } catch (error) {
     res
