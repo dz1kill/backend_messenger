@@ -322,7 +322,7 @@ components:
           example: "123e4567-e89b-12d3-a456-426614174000"
         groupName:
           type: string
-          pattern: "^\\S+$"
+          pattern: "^[^\s]+(?: [^\s]+)*$"
           description: Group name
           example: "Travel"
         notificationMessage:
