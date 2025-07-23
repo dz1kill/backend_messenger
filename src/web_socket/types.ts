@@ -29,6 +29,9 @@ export type ParramNewGroup = {
 export type ParramAddUserInGroup = {
   userId: string;
   groupId: string;
+  message: string;
+  messageId: string;
+  groupName: string;
 };
 
 export type ParramLeaveGroup = {

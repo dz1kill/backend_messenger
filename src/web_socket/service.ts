@@ -27,7 +27,10 @@ import {
   PRIVATE_MESSAGE,
 } from "./constants";
 
-const checkUserGroup = async (userId: string, groupId: string) => {
+const checkUserGroup = async (
+  userId: string,
+  groupId: string
+): Promise<boolean> => {
   const result = await sequelize.query(
     `  
   SELECT * FROM users_groups
@@ -35,9 +38,7 @@ const checkUserGroup = async (userId: string, groupId: string) => {
     { raw: true, nest: true, model: UserGroup }
   );
 
-  if (result.length === 0) {
-    throw { message: "User is not a member of this group" };
-  }
+  return result.length > 0;
 };
 
 const insertUserGroup = async (
@@ -322,7 +323,11 @@ export const latestMessageGroup = async (
   const { id } = client;
   const { limit, cursorCreatedAt, groupId } = parsedMessage.params;
 
-  await checkUserGroup(id, groupId);
+  const userInGroup = await checkUserGroup(id, groupId);
+  if (!userInGroup) {
+    throw { message: "User is not a member of this group" };
+  }
+
   const result = await getDblatestMessageGroup(groupId, limit, cursorCreatedAt);
 
   return { data: result };
@@ -333,27 +338,64 @@ export const addUserInGroup = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id, email, firstName } = client;
-  const { groupId, userId } = parsedMessage.params;
-  const data: ParramsResultSuccessResponse = {
-    item: {
-      message: `User #${email} added in group.`,
-      senderName: firstName,
-    },
-  };
+  const notification = true;
+  const { id, firstName, lastName } = client;
+  const { groupId, userId, groupName, messageId, message } =
+    parsedMessage.params;
 
-  await checkUserGroup(id, groupId);
+  const userInGroup = await checkUserGroup(id, groupId);
+  if (!userInGroup) {
+    throw { message: "User is not a member of this group" };
+  }
 
+  const targetUserInGroup = await checkUserGroup(userId, groupId);
+  if (targetUserInGroup) {
+    throw new Error("the user is already in the group");
+  }
   await sequelize.transaction(async (trx) => {
     await insertUserGroup(groupId, userId, trx);
   });
+
+  const result = await insertMessageGroup(
+    id,
+    groupId,
+    message,
+    messageId,
+    notification
+  );
+  const data: ParramsResultSuccessResponse = {
+    item: {
+      groupId,
+      groupName,
+      messageId,
+      message,
+      senderName: firstName,
+      senderId: id,
+      senderLastName: lastName,
+      notification,
+      createdAt: (await result[0]).createdAt,
+    },
+    isBroadcast: true,
+  };
 
   const usersInGroup = await selectUsersGroup(groupId);
   const userIds: string[] = transformArrUserGroup(usersInGroup);
 
   sendingMessages(userIds, userConnections, id, data, ADD_USER_IN_GROUP);
 
-  return {};
+  return {
+    item: {
+      groupId,
+      groupName,
+      messageId,
+      message,
+      senderName: firstName,
+      senderId: id,
+      senderLastName: lastName,
+      notification,
+      createdAt: (await result[0]).createdAt,
+    },
+  };
 };
 
 export const leaveGroup = async (
@@ -365,7 +407,10 @@ export const leaveGroup = async (
   const { id, firstName, lastName } = client;
   const { groupId, message, messageId, groupName } = parsedMessage.params;
 
-  await checkUserGroup(id, groupId);
+  const userInGroup = await checkUserGroup(id, groupId);
+  if (!userInGroup) {
+    throw { message: "User is not a member of this group" };
+  }
   await dropUserGroup(id, groupId);
   const result = await insertMessageGroup(
     id,
@@ -406,7 +451,10 @@ export const sendMessageGroup = async (
   const notification = false;
   const { id, firstName, lastName } = client;
   const { groupId, content, messageId, groupName } = parsedMessage.params;
-  await checkUserGroup(id, groupId);
+  const userInGroup = await checkUserGroup(id, groupId);
+  if (!userInGroup) {
+    throw { message: "User is not a member of this group" };
+  }
 
   const result = await insertMessageGroup(
     id,
@@ -482,7 +530,10 @@ export const deleteGroup = async (
 ) => {
   const { id } = client;
   const { groupId } = parsedMessage.params;
-  await checkUserGroup(id, groupId);
+  const userInGroup = await checkUserGroup(id, groupId);
+  if (!userInGroup) {
+    throw { message: "User is not a member of this group" };
+  }
 
   const data: ParramsResultSuccessResponse = {
     item: {
