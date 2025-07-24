@@ -59,7 +59,30 @@ This is a minimum viable product (MVP) of a messenger, including:
 - **Migrations** for schema management
 - **Docker** - Containerized deployment
 
-## Examples of websocket requests, responses and broadcast:
+## 🏃 Running the app
+
+```bash
+
+# In the console, run the database image with the command:
+$ docker-compose up
+
+# Create tables in the database using the "migrations" command:
+$ npm run migrate:start
+
+# Running the project in development mode:
+$ npm run dev
+
+```
+
+## 🔗 Links
+
+Documentation (Swagger UI) is available at: [link] http://localhost:3001/api/
+
+Websocket server: ws://localhost:3001/
+
+node v16.14.2
+
+## 💬 Examples of WebSocket Requests, Responses and Broadcast
 
 1. Connection to the server via websocket is organized in two ways, testing and for work.
 
@@ -495,26 +518,3 @@ Broadcast:
     "message": "User is not a member of this group"
 }
 ```
-
-## Running the app
-
-```bash
-
-# In the console, run the database image with the command:
-$ docker-compose up
-
-# Create tables in the database using the "migrations" command:
-$ npm run migrate:start
-
-# Running the project in development mode:
-$ npm run dev
-
-```
-
-## Links
-
-Documentation (Swagger UI) is available at: [link] http://localhost:3001/api/
-
-Websocket server: ws://localhost:3001/
-
-node v16.14.2
