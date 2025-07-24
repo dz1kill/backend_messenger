@@ -112,7 +112,7 @@ paths:
         - bearerAuth: []
       tags:
         - UseCases
-      summary: Search users and group .
+      summary: Search for users and groups the user is a member.
       parameters:
         - in: query
           name: searchText
@@ -136,7 +136,7 @@ paths:
         - bearerAuth: []
       tags:
         - UseCases
-      summary: Delete messages for user.
+      summary: Delete dialog for user.
       requestBody:
         required: true
         content:
@@ -186,7 +186,7 @@ paths:
         - bearerAuth: []
       tags:
         - UseCases
-      summary: Search users by name or email .
+      summary: Search users by name or email who are not members of a specific group.
       parameters:
         - in: query
           name: searchText

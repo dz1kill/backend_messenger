@@ -1,37 +1,76 @@
-## Description
+# Messenger Backend MVP
 
-MVP Backend for messenger.
+## 📌 Overview
 
-1. The backend implements using the HHTP protocol:  
-   1.1 User registration.  
-   1.2 User authorization.  
-   1.3 Updating user data.  
-   1.4 Deleting a user.
+This is a minimum viable product (MVP) of a messenger, including:
 
-2. By Websocket:  
-   2.1 Page loading of all latest chats.  
-   2.2 Page loading of the latest messages in the chat.  
-   2.3 Create a group.  
-   2.4 Adding users to the group.  
-   2.5 Leave the group.  
-   2.6 Write a message in the group.  
-   2.7 Private messages.
+- **Backend**: REST API for user management & WebSocket API for real-time messaging.
+- **Frontend**: A companion web client : https://github.com/dz1kill/frontend_messenger
 
-Stack: Node.js, Express, WS, PostgreSQL, Sequelize-typescript, JWT.
+## ✨ Key Features
 
-## Examples of websocket requests and responses :
+### 🔹 HTTP API (REST)
+
+**User Management**
+
+- ✅ User registration and authentication (JWT)
+- ✏️ Profile updates and account deletion
+- 🔍 User and group search functionality
+
+**Operations**
+
+- 🔍 Find users & my groups  
+  _(Lists all users and the groups the requesting user belongs to)_
+- 🔍 Find non-group members  
+  _(Search users not in specified group)_
+- 👥 Create new group
+- 🧹 Delete dialog for user
+
+### 🔹 WebSocket API
+
+**Chat Functionality**
+
+- 💬 Private and group messaging
+- 📚 Paginated message history
+- 📋 Chat list with latest messages
+
+**Group Management**
+
+- 👥 Add/remove members
+- 👋 Leave groups
+- 🗑️ Group deletion
+
+## 🛠️ Technology Stack
+
+| Component         | Technology             |
+| ----------------- | ---------------------- |
+| Backend Framework | Node.js + Express + TS |
+| Realtime          | WS (WebSocket)         |
+| Database          | PostgreSQL             |
+| ORM               | Sequelize              |
+| Auth              | JWT                    |
+| API Docs          | Swagger UI             |
+
+## ⚙️ System Architecture
+
+- **REST API** for CRUD operations
+- **WebSocket** for real-time events
+- **PostgreSQL** for data persistence
+- **Migrations** for schema management
+
+## Examples of websocket requests, responses and broadcast:
 
 1. Connection to the server via websocket is organized in two ways, testing and for work.
 
 You can use Postman then when connecting in the header we must pass the token.
-Or connecting a client:  
-example connect
+Or connecting a client.  
+Example connect client:
 
 ```js
 new WebSocket(url, ["auth", token]);
 ```
 
-2. list of recent chats with latest messages:  
+2. List of chats with latest messages:  
    Example:
 
 ```js
@@ -49,35 +88,35 @@ Response:
 
 ```js
 {
-    "type": "listLastMessage",
-    "success": true,
-    "params": {
-        "data": [
-            {
-                "messageId": "2d44a4a3-1a75-4e64-9dd6-99876d750de3",
-                "senderId": "8f2cf7a5-688c-47d8-a8b7-2c14d63a665b",
-                "senderName": "Ian",
-                "senderLastName" "Lee",
-                "receiverId": null,
-                "receiverName": null,
-                "receiverLastName": null,
-                "groupId": "4be49da0-df09-49d5-9de1-9a84553b2ef9",
-                "groupName": "Design Hub",
-                "content": "Thanks for the quick response.",
-                "createdAt": "2025-07-01T15:24:16.941Z",
-                "updatedAt": "2025-07-01T15:43:28.339Z",
-                "deletedAt": null
-            },
-            // other chats
-        ],
-        "isBroadcast": false
-        "item":null
-    }
+  "type": "listLastMessage",
+  "success": true,
+  "params": {
+    "item": null,
+    "data": [
+      {
+        "messageId": "fe411368-c2cf-4abc-8a11-94b70f772bd6",
+        "senderId": "4636ae65-4a05-4546-b4b7-f174aa4fc135",
+        "senderName": "Ethan",
+        "senderLastName": "Davis",
+        "receiverId": null,
+        "receiverName": null,
+        "receiverLastName": null,
+        "groupId": "02d7b854-451d-4947-b03a-c2b620a991a4",
+        "groupName": "Music Makers",
+        "content": "Ethan Davis добавил(a) в группу Ian Anderson",
+        "createdAt": "2025-07-24T00:29:25.597Z",
+        "updatedAt": "2025-07-24T00:29:25.597Z",
+        "deletedAt": null
+      }
+       // other chats
+    ],
+    "isBroadcast": false
+  }
 }
 
 ```
 
-3. Recent private messages:
+3. Paginated loading of personal messages:
 
    Example:
 
@@ -85,8 +124,8 @@ Response:
 {
   "type": "getlatestMessageDialog",
   "params": {
-    "receiverId":"3989f7d0-7a78-4914-b7eb-bff07c619e97",
-    "limit": 5,
+    "receiverId": "4f65bafb-ceb6-4187-a23e-54e13cfdce0e",
+    "limit": 12,
     "cursorCreatedAt": null
   }
 }
@@ -97,29 +136,29 @@ Response:
 
 ```js
 {
-    "type": "getlatestMessageDialog",
-    "success": true,
-    "params": {
-        "data": [
-            {
-                "messageId": "a439b5bc-c2ec-4487-b2cd-29ceb8345d27",
-                "senderId": "3989f7d0-7a78-4914-b7eb-bff07c619e97",
-                "senderName": "Alice",
-                "receiverId": "c6674a8e-7619-4198-9897-d2ed90572568",
-                "receiverName": "Charlie",
-                "content": "I'll send the file soon.",
-                "createdAt": "2025-07-01T12:05:55.586Z"
-            },
-            // other messages
-        ],
-         "isBroadcast": false,
-         "item":null
-    }
+  "type": "getlatestMessageDialog",
+  "success": true,
+  "params": {
+    "item": null,
+    "data": [
+      {
+        "messageId": "e1c300be-bcb1-4791-8264-697b6ceb6574",
+        "senderId": "4636ae65-4a05-4546-b4b7-f174aa4fc135",
+        "senderName": "Ethan",
+        "receiverId": "4f65bafb-ceb6-4187-a23e-54e13cfdce0e",
+        "receiverName": "Diana",
+        "content": "Can we talk about the project?",
+        "createdAt": "2025-07-23T16:39:34.951Z"
+      }
+     // other messages
+    ],
+    "isBroadcast": false
+  }
 }
 
 ```
 
-4. Recent messages in the group:
+4. Paginated loading of group messages:
 
    Example:
 
@@ -127,8 +166,9 @@ Response:
 {
   "type": "getlatestMessageGroup",
   "params": {
-    "groupId": "75b3f7bc-41d5-407d-b0ec-20e2490266de",
-    "limit": 5,
+    "groupName": "Music Makers",
+    "groupId": "02d7b854-451d-4947-b03a-c2b620a991a4",
+    "limit": 12,
     "cursorCreatedAt": null
   }
 }
@@ -139,115 +179,42 @@ Response:
 
 ```js
 {
-    "type": "getlatestMessageGroup",
-    "success": true,
-    "params": {
-        "data": [
-            {
-                "messageId": "322ad6fa-7f30-4efc-a7e1-dbe351d3f125",
-                "senderId": "639862ba-7be1-48b4-ae7a-34457581c09a",
-                "senderName": "Laura",
-                "senderLastName": "Lewis",
-                "groupId": "75b3f7bc-41d5-407d-b0ec-20e2490266de",
-                "groupName": "Movie Buffs",
-                "content": "Hey, how's it going?",
-                "createdAt": "2025-06-30T00:12:53.094Z"
-            },
-            // other messages
-        ],
-         "isBroadcast": false,
-         "item":null
-    }
-}
-```
-
-5. Creating a group:
-
-   Example:
-
-```js
-{
-  "type": "newGroup",
+  "type": "getlatestMessageGroup",
+  "success": true,
   "params": {
-    "groupId": "322ad4fa-7f30-4efc-a7e1-dbe351d3f125",
-    "groupName": "new name"
+    "item": null,
+    "data": [
+      {
+        "notification": true,
+        "messageId": "fe411368-c2cf-4abc-8a11-94b70f772bd6",
+        "senderId": "4636ae65-4a05-4546-b4b7-f174aa4fc135",
+        "senderName": "Ethan",
+        "senderLastName": "Davis",
+        "groupId": "02d7b854-451d-4947-b03a-c2b620a991a4",
+        "groupName": "Music Makers",
+        "content": "Ethan Davis добавил(a) в группу Ian Anderson",
+        "createdAt": "2025-07-24T00:29:25.597Z"
+      },
+      {
+        "notification": null,
+        "messageId": "8df15fb7-c7df-45c2-aa87-d27ea03aa1d2",
+        "senderId": "4636ae65-4a05-4546-b4b7-f174aa4fc135",
+        "senderName": "Ethan",
+        "senderLastName": "Davis",
+        "groupId": "02d7b854-451d-4947-b03a-c2b620a991a4",
+        "groupName": "Music Makers",
+        "content": "No worries, take your time.",
+        "createdAt": "2025-07-23T16:40:18.714Z"
+      }
+       //other messages
+    ],
+    "isBroadcast": false
   }
 }
 
 ```
 
-Response:
-
-```js
-{
-    "type": "newGroup",
-    "success": true,
-    "params": {
-        "data": null,
-        "isBroadcast": false,
-        "item":null
-    }
-}
-```
-
-6. Adding users to a group:
-
-   Example:
-
-```js
-{
-  "type": "addUserInGroup",
-  "params": {
-    "groupId": "aefb7d52-5bf6-4851-a2d3-c902f12d007f",
-    "userId": "10ca546a-dab4-470f-b93c-787de10d46c1"
-  }
-}
-
-```
-
-Response:
-
-```js
-{
-    "type": "addUserInGroup",
-    "success": true,
-    "params": {
-        "data": null,
-        "isBroadcast": false,
-        "item":null
-    }
-}
-```
-
-7. Leave the group:
-
-   Example:
-
-```js
-{
-  "type": "leaveGroup",
-  "params": {
-    "groupId": "aefb7d52-5bf6-4851-a2d3-c902f12d007f"
-  }
-}
-
-```
-
-Response:
-
-```js
-{
-    "type": "leaveGroup",
-    "success": true,
-    "params": {
-        "data": null,
-        "isBroadcast": false,
-        "item":null
-    }
-}
-```
-
-8. Message in group:
+5. Sending group messages:
 
    Example:
 
@@ -255,11 +222,22 @@ Response:
 {
   "type": "messageInGroup",
   "params": {
-    "messageId":"3989f7d0-7a78-4914-b7eb-bff07c619e97",
-    "groupName": "Tech Geeks",
-    "groupId": "4be49da0-df09-49d5-9de1-9a84553b2ef9",
-    "content": "Hi"
+    "messageId": "e5be0b48-6ff1-4c93-97fd-314f88c4def5",
+    "groupName": "Music Makers",
+    "groupId": "02d7b854-451d-4947-b03a-c2b620a991a4",
+    "content": "hi"
   }
+}
+
+```
+
+Response:
+
+```js
+{
+  "type": "messageInGroup",
+  "success": true,
+  "params": { "item": null, "data": null, "isBroadcast": false }
 }
 
 ```
@@ -284,24 +262,9 @@ Broadcast:
         "isBroadcast": true
     }
 }
-
 ```
 
-Response:
-
-```js
-{
-    "type": "messageInGroup",
-    "success": true,
-    "params": {
-        "data": null,
-        "isBroadcast": false,
-        "item":null
-    }
-}
-```
-
-8. Private message:
+6. Sending private messages:
 
    Example:
 
@@ -309,9 +272,143 @@ Response:
 {
   "type": "privateMessage",
   "params": {
-  "messageId":"3979f7d0-7a78-4914-b7eb-bff07c619e97",
-  "receiverId": "7e7c8487-9cc2-45d5-8c8d-7c37356cec06",
-  "content":"Hi"
+    "messageId": "231505c0-6f32-4611-8a5b-03f600eee20b",
+    "receiverId": "a675b290-cf28-49f9-90ed-a4ae1ee1af44",
+    "content": "hi"
+  }
+}
+
+
+```
+
+Response:
+
+```js
+{
+  "type": "privateMessage",
+  "success": true,
+  "params": { "item": null, "data": null, "isBroadcast": false }
+}
+
+```
+
+Broadcast:
+
+```js
+{
+  "type": "privateMessage",
+  "success": true,
+  "params": {
+    "item": {
+      "messageId": "231505c0-6f32-4611-8a5b-03f600eee20b",
+      "message": "hi",
+      "senderName": "Ethan",
+      "senderLastName": "Davis",
+      "senderId": "4636ae65-4a05-4546-b4b7-f174aa4fc135",
+      "createdAt": "2025-07-24T09:19:36.436Z"
+    },
+    "data": null,
+    "isBroadcast": true
+  }
+}
+
+
+```
+
+7. Adding a member to a group:
+
+   Example:
+
+```js
+{
+  "type": "addUserInGroup",
+  "params": {
+    "groupId": "02d7b854-451d-4947-b03a-c2b620a991a4",
+    "groupName": "Music Makers",
+    "userId": "ae7cacd3-f2bf-4ace-8f4c-3a96d0bcc761",
+    "messageId": "12e36557-e3e2-4c54-bed6-d45a621cb90d",
+    "message": "Ethan Davis добавил(a) в группу Don Stell"
+  }
+}
+
+```
+
+Response:
+
+```js
+{
+  "type": "addUserInGroup",
+  "success": true,
+  "params": {
+    "item": {
+      "groupId": "02d7b854-451d-4947-b03a-c2b620a991a4",
+      "groupName": "Music Makers",
+      "messageId": "12e36557-e3e2-4c54-bed6-d45a621cb90d",
+      "message": "Ethan Davis добавил(a) в группу Don Stell",
+      "senderName": "Ethan",
+      "senderId": "4636ae65-4a05-4546-b4b7-f174aa4fc135",
+      "senderLastName": "Davis",
+      "notification": true,
+      "createdAt": "2025-07-24T09:26:25.675Z"
+    },
+    "data": null,
+    "isBroadcast": false
+  }
+}
+```
+
+Broadcast:
+
+```js
+{
+    "type": "addUserInGroup",
+    "success": true,
+    "params": {
+        "item": {
+            "groupId": "02d7b854-451d-4947-b03a-c2b620a991a4",
+            "groupName": "Music Makers",
+            "messageId": "12e36557-e3e2-4c54-bed6-d45a621cb90d",
+            "message": "Ethan Davis добавил(a) в группу Don Stell",
+            "senderName": "Ethan",
+            "senderId": "4636ae65-4a05-4546-b4b7-f174aa4fc135",
+            "senderLastName": "Davis",
+            "notification": true,
+            "createdAt": "2025-07-24T09:26:25.675Z"
+        },
+        "data": null,
+        "isBroadcast": true
+    }
+}
+
+```
+
+8. Leave the group:
+
+   Example:
+
+```js
+{
+  "type": "leaveGroup",
+  "params": {
+    "groupId": "02d7b854-451d-4947-b03a-c2b620a991a4",
+    "message": "Ethan Davis покинул(a) группу",
+    "messageId": "1d166886-7913-43fe-b0ac-13e18acb021a",
+    "groupName": "Music Makers"
+  }
+}
+
+```
+
+Response:
+
+```js
+{
+  "type": "leaveGroup",
+  "success": true,
+  "params": {
+    "item": { "groupId": "02d7b854-451d-4947-b03a-c2b620a991a4" },
+    "data": null,
+    "isBroadcast": false
   }
 }
 
@@ -321,32 +418,67 @@ Broadcast:
 
 ```js
 {
-    "type": "privateMessage",
+    "type": "leaveGroup",
     "success": true,
     "params": {
         "item": {
-            "messageId": "5f0da29b-93b9-4f4e-bb16-ba75f4d7af06",
-            "message": "Hi",
-            "senderName": "Bob",
-            "senderId": "525c8f71-b19a-4dc5-a516-ac1fe5e6120a",
-            "createdAt": "2025-07-03T10:16:06.340Z"
+            "groupId": "02d7b854-451d-4947-b03a-c2b620a991a4",
+            "groupName": "Music Makers",
+            "messageId": "1d166886-7913-43fe-b0ac-13e18acb021a",
+            "message": "Ethan Davis покинул(a) группу",
+            "senderName": "Ethan",
+            "senderId": "4636ae65-4a05-4546-b4b7-f174aa4fc135",
+            "senderLastName": "Davis",
+            "notification": true,
+            "createdAt": "2025-07-24T09:30:23.223Z"
         },
         "data": null,
         "isBroadcast": true
     }
 }
+
+```
+
+8. Delete group:
+
+   Example:
+
+```js
+{
+  "type": "dropGroup",
+  "params": { "groupId": "5ed09aa2-71d9-4b36-b44d-33f4c2157493" }
+}
+
+
 ```
 
 Response:
 
 ```js
 {
-    "type": "privateMessage",
+  "type": "dropGroup",
+  "success": true,
+  "params": {
+    "item": { "groupId": "5ed09aa2-71d9-4b36-b44d-33f4c2157493" },
+    "data": null,
+    "isBroadcast": false
+  }
+}
+
+```
+
+Broadcast:
+
+```js
+{
+    "type": "dropGroup",
     "success": true,
     "params": {
-        "item": null
+        "item": {
+            "groupId": "5ed09aa2-71d9-4b36-b44d-33f4c2157493"
+        },
         "data": null,
-        "isBroadcast": false
+        "isBroadcast": true
     }
 }
 ```
