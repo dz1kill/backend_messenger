@@ -106,17 +106,6 @@ paths:
         500:
           description: Server error.
 
-  /use-cases/find-all:
-    get:
-      tags:
-        - UseCases
-      summary: List all users.
-      responses:
-        200:
-          description: Succes.
-        500:
-          description: Server error.
-
   /use-cases/search:
     get:
       security:
@@ -160,11 +149,11 @@ paths:
                 companionId:
                   type: string
                   format: uuid
-                  description: ID of the conversation companion
+                  description: ID of the conversation participant
                   example: "123e4567-e89b-12d3-a456-426614174000"
       responses:
         200:
-          description: Delete message succes.
+          description: Messages marked as deleted successfully.
         401:
           description: Not authorized.
         500:
@@ -185,7 +174,7 @@ paths:
               $ref: "#/components/schemas/createGroup"
       responses:
         200:
-          description: Create group succes.
+          description: Group created successfully.
         401:
           description: Not authorized.
         500:
@@ -212,10 +201,10 @@ paths:
           required: true
           schema:
             type: string
-          description: Uuid key group.
+          description: Unique identifier of the group in UUID format.
       responses:
         200:
-          description: Succes.
+          description: Search results returned successfully.
         401:
           description: Not authorized.
         500:
@@ -239,22 +228,22 @@ components:
         firstName:
           type: string
           pattern: "^\\S+$"
-          description: User first name
+          description: First name of the user (no spaces allowed)
           example: Don
         lastName:
           type: string
           pattern: '^\S*$'
-          description: User last name
+          description: Last name of the user (optional, no spaces allowed if provided)
           example: Stell
         email:
           type: string
           pattern: "^\\S+$"
-          description: User email
+          description: Email address of the user (no spaces allowed)
           example: admin@example.com
         password:
           type: string
           pattern: "^\\S+$"
-          description: User password
+          description: Account password (no spaces allowed)
           example: "1234"
 
     loginUser:
@@ -266,11 +255,11 @@ components:
       properties:
         email:
           type: string
-          description: User email
+          description: Registered email address of the user
           example: admin@example.com
         password:
           type: string
-          description: Password user.
+          description: Account password associated with the email
           example: "1234"
 
     updateProfile:
@@ -280,12 +269,12 @@ components:
         firstName:
           type: string
           pattern: "^\\S+$"
-          description: User first name.
+          description: New first name for the user profile (no spaces allowed)
           example: Derek
         lastName:
           type: string
           pattern: "^\\S+$"
-          description: User last name.
+          description: New last name for the user profile (no spaces allowed)
           example: Jordan
 
     changePasswordProfile:
@@ -298,12 +287,12 @@ components:
         oldPassword:
           type: string
           pattern: "^\\S+$"
-          description: Old user password
+          description: Current password of the user account (no spaces allowed)
           example: "1234"
         newPassword:
           type: string
           pattern: "^\\S+$"
-          description: New user password
+          description: New password to replace the current one (no spaces allowed)
           example: "12345"
 
     createGroup:
@@ -318,19 +307,19 @@ components:
         groupId:
           type: string
           pattern: "^\\S+$"
-          description: id in uuid format
+          description: Unique identifier for the new group in UUID format
           example: "123e4567-e89b-12d3-a456-426614174000"
         groupName:
           type: string
           pattern: "^[^\s]+(?: [^\s]+)*$"
-          description: Group name
+          description: Name for the new group (leading/trailing spaces not allowed)
           example: "Travel"
         notificationMessage:
           type: string
-          description: Notification message
+          description: Initial notification message sent to group members
           example: "Group create"
         messageId:
           type: string
           pattern: "^\\S+$"
-          description: id in uuid format
+          description: Unique identifier for the initial message in UUID format
           example: "123e4567-e89b-12d3-a456-426614174000"

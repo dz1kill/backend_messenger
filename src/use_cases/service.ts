@@ -9,9 +9,9 @@ const searchUserAndGroup = async (userId: string, searchText: string) =>
     SELECT group_id FROM users_groups WHERE user_id = :current_user_id
 ),
 
-matched_users AS (
+matched_users AS ( 
     SELECT 
-        u.id AS "userId",
+        u.id AS "userId",  
         u.first_name AS "firstName",
         u.last_name AS "lastName",
         u.email,
