@@ -57,6 +57,7 @@ This is a minimum viable product (MVP) of a messenger, including:
 - **WebSocket** for real-time events
 - **PostgreSQL** for data persistence
 - **Migrations** for schema management
+- **Docker** - Containerized deployment
 
 ## Examples of websocket requests, responses and broadcast:
 
