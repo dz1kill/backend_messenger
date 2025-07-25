@@ -150,12 +150,26 @@ const userNames = [
 
 const shuffleArray = (array) => array.sort(() => 0.5 - Math.random());
 
+const getRandomDayOffset = () => {
+  const rand = Math.random();
+
+  if (rand < 0.2) {
+    return getRandomIntInclusive(0, 1);
+  } else if (rand < 0.6) {
+    return getRandomIntInclusive(2, 3);
+  } else {
+    return getRandomIntInclusive(4, 5);
+  }
+};
+
 const getRandomTimeForDay = (daysAgo) => {
   const now = new Date();
   const date = new Date(now);
-  date.setDate(date.getDate() - daysAgo);
 
-  if (daysAgo === 0) {
+  const actualDaysAgo = getRandomDayOffset();
+  date.setDate(date.getDate() - actualDaysAgo);
+
+  if (actualDaysAgo === 0) {
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
