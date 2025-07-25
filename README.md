@@ -24,7 +24,8 @@ This is a minimum viable product (MVP) of a messenger, including:
 - 🔍 Find non-group members  
   _(Search users not in specified group)_
 - 👥 Create new group
-- 🧹 Delete dialog for user
+- 🧹 Delete dialog for user    
+ _(This will only delete the dialog for you. The other user will still see it)_
 
 ### 🔹 WebSocket API
 
