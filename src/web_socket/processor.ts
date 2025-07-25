@@ -2,12 +2,12 @@ import { JwtPayload } from "jsonwebtoken";
 import WebSocket from "ws";
 import {
   addUserInGroup,
+  deleteGroup,
   latestMessageDialog,
   latestMessageGroup,
   leaveGroup,
   listLastMessage,
   sendMessageGroup,
-  newGroup,
   sendPrivateMessage,
 } from "./service";
 import {
@@ -15,23 +15,23 @@ import {
   addUserInGroupSchema,
   buildErrorResponse,
   buildSuccessResponse,
+  dropGroupSchema,
   latestMessagesDialogSchema,
   latestMessagesGroupSchema,
   leaveGroupSchema,
   listLastMessageSchema,
-  newGroupSchema,
   privateMessageSchema,
   validateByZod,
 } from "./helper";
 import { ParamsType, ReqMessageDTO } from "./types";
 import {
   ADD_USER_IN_GROUP,
+  DROP_GROUP,
   GET_LATEST_MESSAGE_DIALOG,
   GET_LATEST_MESSAGE_GROUP,
   LEAVE_GROUP,
   LIST_LAST_MESSAGE,
   MESSAGE_IN_GROUP,
-  NEW_GROUP,
   PRIVATE_MESSAGE,
 } from "./constants";
 
@@ -65,20 +65,12 @@ export const processor = async (
     case GET_LATEST_MESSAGE_GROUP:
       try {
         validateByZod(parsedMessage, latestMessagesGroupSchema);
+
         const result = await latestMessageGroup(parsedMessage, client);
+
         buildSuccessResponse(ws, result, GET_LATEST_MESSAGE_GROUP);
       } catch (error) {
         buildErrorResponse(ws, error, GET_LATEST_MESSAGE_GROUP);
-      }
-      break;
-
-    case NEW_GROUP:
-      try {
-        validateByZod(parsedMessage, newGroupSchema);
-        const result = await newGroup(parsedMessage, client);
-        buildSuccessResponse(ws, result, NEW_GROUP);
-      } catch (error) {
-        buildErrorResponse(ws, error, NEW_GROUP);
       }
       break;
 
@@ -94,6 +86,7 @@ export const processor = async (
       } catch (error) {
         buildErrorResponse(ws, error, ADD_USER_IN_GROUP);
       }
+
       break;
 
     case LEAVE_GROUP:
@@ -132,6 +125,21 @@ export const processor = async (
         buildSuccessResponse(ws, result, PRIVATE_MESSAGE);
       } catch (error) {
         buildErrorResponse(ws, error, PRIVATE_MESSAGE);
+      }
+
+      break;
+
+    case DROP_GROUP:
+      try {
+        validateByZod(parsedMessage, dropGroupSchema);
+        const result = await deleteGroup(
+          parsedMessage,
+          client,
+          userConnections
+        );
+        buildSuccessResponse(ws, result, DROP_GROUP);
+      } catch (error) {
+        buildErrorResponse(ws, error, DROP_GROUP);
       }
 
       break;

@@ -10,6 +10,7 @@ import {
 import { User } from "./user";
 import { Group } from "./group";
 import { Image } from "./image";
+import { UUID } from "crypto";
 
 @Table({
   tableName: "messages",
@@ -18,36 +19,43 @@ import { Image } from "./image";
 })
 export class Message extends Model {
   @Column({
-    type: DataType.INTEGER(),
+    type: DataType.UUID(),
     primaryKey: true,
     autoIncrement: true,
   })
-  id: number;
+  id: UUID;
+
+  @Column({
+    type: DataType.ARRAY(DataType.UUID),
+    allowNull: true,
+    defaultValue: [],
+  })
+  deletedByUsers: string[];
 
   @ForeignKey(() => User)
   @Column({
-    type: DataType.INTEGER(),
+    type: DataType.UUID(),
     allowNull: false,
   })
-  senderId: number;
+  senderId: string;
 
   @BelongsTo(() => User)
   sender: User;
 
   @ForeignKey(() => User)
   @Column({
-    type: DataType.INTEGER(),
+    type: DataType.UUID(),
   })
-  receiverId: number;
+  receiverId: string;
 
   @BelongsTo(() => User)
   receiver: User;
 
   @ForeignKey(() => Group)
   @Column({
-    type: DataType.INTEGER(),
+    type: DataType.UUID(),
   })
-  groupId: number;
+  groupId: string;
 
   @BelongsTo(() => Group)
   group: Group;
@@ -56,6 +64,11 @@ export class Message extends Model {
     type: DataType.STRING(),
   })
   content: string;
+
+  @Column({
+    type: DataType.BOOLEAN(),
+  })
+  notification: string;
 
   @HasMany(() => Image)
   images: Image[];

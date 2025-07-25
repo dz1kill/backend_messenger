@@ -3,14 +3,23 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable("messages", {
       id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
+        type: Sequelize.UUID,
         primaryKey: true,
         allowNull: false,
       },
 
+      deleted_by_users: {
+        type: Sequelize.ARRAY(Sequelize.UUID),
+        allowNull: true,
+        defaultValue: [],
+      },
+
+      notification: {
+        type: Sequelize.BOOLEAN,
+      },
+
       sender_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         onDelete: "CASCADE",
         allowNull: false,
         references: {
@@ -21,7 +30,7 @@ module.exports = {
       },
 
       receiver_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         onDelete: "CASCADE",
         allowNull: true,
         references: {
@@ -32,7 +41,7 @@ module.exports = {
       },
 
       group_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         onDelete: "CASCADE",
         allowNull: true,
         references: {

@@ -13,63 +13,69 @@ export const listLastMessageSchema = z.object({
   type: z.string(),
   params: z.object({
     limit: z.number(),
-    page: z.number(),
+    cursorCreatedAt: z.string().nullable(),
   }),
 });
 
 export const latestMessagesDialogSchema = z.object({
   type: z.string(),
   params: z.object({
-    receiverId: z.number(),
+    receiverId: z.string().uuid(),
     limit: z.number(),
-    page: z.number(),
+    cursorCreatedAt: z.string().nullable(),
   }),
 });
 
 export const latestMessagesGroupSchema = z.object({
   type: z.string(),
   params: z.object({
-    groupId: z.number(),
+    groupId: z.string().uuid(),
     limit: z.number(),
-    page: z.number(),
-  }),
-});
-
-export const newGroupSchema = z.object({
-  type: z.string(),
-  params: z.object({
-    groupName: z.string(),
+    cursorCreatedAt: z.string().nullable(),
   }),
 });
 
 export const addUserInGroupSchema = z.object({
   type: z.string(),
   params: z.object({
-    groupId: z.number(),
-    userId: z.number(),
+    groupId: z.string().uuid(),
+    userId: z.string().uuid(),
   }),
 });
 
 export const leaveGroupSchema = z.object({
   type: z.string(),
   params: z.object({
-    groupId: z.number(),
+    groupId: z.string().uuid(),
+    message: z.string(),
+    messageId: z.string().uuid(),
+    groupName: z.string(),
   }),
 });
 
 export const MessageInGroupSchema = z.object({
   type: z.string(),
   params: z.object({
-    groupId: z.number(),
+    messageId: z.string().uuid(),
+    groupId: z.string().uuid(),
     content: z.string(),
+    groupName: z.string(),
   }),
 });
 
 export const privateMessageSchema = z.object({
   type: z.string(),
   params: z.object({
-    receiverId: z.number(),
+    messageId: z.string().uuid(),
+    receiverId: z.string().uuid(),
     content: z.string(),
+  }),
+});
+
+export const dropGroupSchema = z.object({
+  type: z.string(),
+  params: z.object({
+    groupId: z.string().uuid(),
   }),
 });
 
@@ -84,8 +90,6 @@ export const validateByZod = (
 ) => {
   schema.parse(data);
 };
-
-export const calcOffset = (page: number, limit: number) => (page - 1) * limit;
 
 export const transformArrUserGroup = (usersInGroup: UserGroup[]) => {
   const userIds = [];
@@ -117,9 +121,9 @@ export const buildSuccessResponse = (
     type,
     success: true,
     params: {
+      item: params.item || null,
       data: params.data || null,
-      message: params.message || null,
-      senderName: params.senderName || null,
+      isBroadcast: params.isBroadcast || false,
     },
   };
   ws.send(JSON.stringify(buildResponse));

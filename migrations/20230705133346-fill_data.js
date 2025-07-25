@@ -1,220 +1,356 @@
-const {
-  NUMBER_OF_USERS,
-  NUMBER_OF_GROUPS,
-  NUMBER_OF_USERS_GROUPS,
-  NUMBER_OF_MESSAGES,
-  NUMBER_OF_IMAGES,
-} = require("./helper/constants.js");
-const { getRandomIntInclusive, hashPassword } = require("./helper/common.js");
+const { hashPassword, getRandomIntInclusive } = require("./helper/common.js");
+const crypto = require("crypto");
 
-const createUser = async (queryInterface) => {
-  const max = NUMBER_OF_USERS;
+const DIALOGUES_PER_CHAT_MIN = 2;
+const DIALOGUES_PER_CHAT_MAX = 4;
+const GROUPS_PER_USER_MIN = 7;
+const GROUPS_PER_USER_MAX = 14;
+const WORKING_HOURS = { start: 9, end: 18 };
 
-  let counter = 0;
-  let userData = 0;
-  const users = [];
+const DIALOGUES = [
+  {
+    topic: "project",
+    messages: [
+      { content: "Привет, как продвигается проект?", delay: 0 },
+      {
+        content: "Пока всё идёт по плану, но есть небольшие задержки",
+        delay: 5,
+      },
+      { content: "Какие именно задержки?", delay: 10 },
+      { content: "Не хватает данных от маркетинга", delay: 15 },
+      { content: "Я уточню у них, когда будут данные", delay: 20 },
+      { content: "Спасибо, это бы ускорило процесс", delay: 25 },
+      { content: "Отправил тебе обновлённый план", delay: 120 },
+      { content: "Получил, выглядит лучше", delay: 125 },
+    ],
+  },
+  {
+    topic: "meeting",
+    messages: [
+      { content: "Привет, во сколько встреча?", delay: 0 },
+      { content: "Думаю в 15:00", delay: 2 },
+      { content: "Можно перенести на 16:00?", delay: 5 },
+      { content: "Да, без проблем", delay: 7 },
+      { content: "Где встречаемся?", delay: 10 },
+      { content: "В конференц-зале на 3 этаже", delay: 12 },
+      { content: "Хорошо, до встречи", delay: 15 },
+    ],
+  },
+  {
+    topic: "weekend",
+    messages: [
+      { content: "Какие планы на выходные?", delay: 0 },
+      { content: "Пока не решил, может поеду за город", delay: 5 },
+      {
+        content: "Мы с друзьями собираемся на шашлыки, присоединяйся",
+        delay: 10,
+      },
+      { content: "Звучит отлично! Где и во сколько?", delay: 15 },
+      { content: "В субботу в 12 у озера", delay: 20 },
+      { content: "Что взять с собой?", delay: 25 },
+      { content: "Можешь взять напитки", delay: 30 },
+      { content: "Договорились!", delay: 35 },
+    ],
+  },
+  {
+    topic: "tech",
+    messages: [
+      { content: "Какой фреймворк будем использовать?", delay: 0 },
+      { content: "Думаю React для фронта", delay: 5 },
+      { content: "А для бэка?", delay: 10 },
+      { content: "Node.js + Express", delay: 15 },
+      { content: "А база данных?", delay: 20 },
+      { content: "PostgreSQL, она лучше подходит", delay: 25 },
+      { content: "Согласен, давай так", delay: 30 },
+    ],
+  },
+  {
+    topic: "movie",
+    messages: [
+      { content: "Смотрел новый фильм Марвел?", delay: 0 },
+      { content: "Ещё нет, стоит посмотреть?", delay: 5 },
+      { content: "Да, очень крутые спецэффекты", delay: 10 },
+      { content: "А сюжет хороший?", delay: 15 },
+      {
+        content: "Сюжет стандартный для Марвел, но актёры отлично сыграли",
+        delay: 20,
+      },
+      { content: "Тогда сходим вместе в выходные?", delay: 25 },
+      { content: "Отличная идея!", delay: 30 },
+    ],
+  },
+  {
+    topic: "lunch",
+    messages: [
+      { content: "Ты на обед?", delay: 0 },
+      { content: "Да, через 10 минут", delay: 2 },
+      { content: "Куда пойдём?", delay: 5 },
+      { content: "Может в новое кафе через дорогу?", delay: 8 },
+      { content: "Там дорого, давай в столовую", delay: 10 },
+      { content: "Ладно, встречаемся у лифта", delay: 12 },
+    ],
+  },
+];
 
-  while (counter < max) {
-    const resultHash = await hashPassword("1234");
-    const user = {
-      first_name: `Patrick${userData}`,
-      last_name: `Gos${userData}`,
-      email: `email@mail.com${userData}`,
-      password: resultHash,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-    users.push(user);
-    userData++;
-    counter++;
+const groupNames = [
+  "IT-Энтузиасты",
+  "Киноманы",
+  "Путешественники",
+  "Книжные черви",
+  "Фитнес-фанаты",
+  "Стартаперы",
+  "Игровая зона",
+  "Гурманы",
+  "Крипто-команда",
+  "Музыканты",
+  "Фото-клуб",
+  "Историки",
+  "Научный отряд",
+  "Владельцы питомцев",
+  "Эко-активисты",
+  "Кофеманы",
+  "Минмалисты",
+  "Дизайн-сообщество",
+  "Обитель разработчиков",
+  "Клуб инвесторов",
+  "Изучающие языки",
+  "Поэтический уголок",
+  "Фэнтези-фанаты",
+  "Мемная фабрика",
+  "Йога-клуб",
+  "Заядлые путешественники",
+  "Аниме-мир",
+  "Родительский чат",
+  "Удалёнщики",
+  "Настольные игры",
+];
+
+const userNames = [
+  ["Анна", "Иванова"],
+  ["Борис", "Петров"],
+  ["Сергей", "Смирнов"],
+  ["Дарья", "Кузнецова"],
+  ["Егор", "Попов"],
+  ["Ольга", "Васильева"],
+  ["Глеб", "Лебедев"],
+  ["Татьяна", "Новикова"],
+  ["Илья", "Морозов"],
+  ["Юлия", "Волкова"],
+  ["Кирилл", "Соловьёв"],
+  ["Лариса", "Козлова"],
+  ["Максим", "Зайцев"],
+  ["Надежда", "Павлова"],
+  ["Артём", "Семёнов"],
+  ["Полина", "Голубева"],
+  ["Роман", "Виноградов"],
+  ["Светлана", "Богданова"],
+  ["Тимофей", "Воробьёв"],
+  ["Ульяна", "Фёдорова"],
+];
+
+const shuffleArray = (array) => array.sort(() => 0.5 - Math.random());
+
+const getRandomDayOffset = () => {
+  const rand = Math.random();
+
+  if (rand < 0.2) {
+    return getRandomIntInclusive(0, 1);
+  } else if (rand < 0.6) {
+    return getRandomIntInclusive(2, 3);
+  } else {
+    return getRandomIntInclusive(4, 5);
   }
-
-  await queryInterface.bulkInsert("users", users);
 };
 
-const deleteUsers = async (queryInterface) => {
-  await queryInterface.sequelize.query("DELETE FROM users");
-};
+const getRandomTimeForDay = (daysAgo) => {
+  const now = new Date();
+  const date = new Date(now);
 
-const createGroups = async (queryInterface) => {
-  const groupObject = {
-    name: "Group",
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
+  const actualDaysAgo = getRandomDayOffset();
+  date.setDate(date.getDate() - actualDaysAgo);
 
-  const max = NUMBER_OF_GROUPS;
+  if (actualDaysAgo === 0) {
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
 
-  let counter = 0;
-
-  const groups = [];
-
-  while (counter < max) {
-    const random = parseInt(Math.random() * 1000000000);
-    const group = {
-      ...groupObject,
-      name: `${groupObject.name} #${random}`,
-    };
-
-    groups.push(group);
-
-    counter++;
-  }
-
-  await queryInterface.bulkInsert("groups", groups);
-};
-
-const deleteGroups = async (queryInterface) => {
-  await queryInterface.sequelize.query("DELETE FROM groups");
-};
-
-const createUsersGroups = async (queryInterface) => {
-  const usersResult = await queryInterface.sequelize.query(
-    "SELECT * FROM users LIMIT 1"
-  );
-  const users = usersResult[0];
-
-  const minUserId = users[0].id;
-  const maxUserId = minUserId + NUMBER_OF_USERS - 1;
-
-  const groupsResult = await queryInterface.sequelize.query(
-    "SELECT * FROM groups LIMIT 1"
-  );
-  const groups = groupsResult[0];
-
-  const minGroupId = groups[0].id;
-  const maxGroupId = minGroupId + NUMBER_OF_GROUPS - 1;
-
-  const max = NUMBER_OF_USERS_GROUPS;
-  let counter = 0;
-
-  while (counter < max) {
-    const randomUserId = getRandomIntInclusive(minUserId, maxUserId);
-    const randomGroupId = getRandomIntInclusive(minGroupId, maxGroupId);
-    try {
-      await queryInterface.insert(null, "users_groups", {
-        user_id: randomUserId,
-        group_id: randomGroupId,
-      });
-    } catch (e) {
-      continue;
-    }
-    counter++;
-  }
-};
-
-const deleteUsersGroups = async (queryInterface) => {
-  await queryInterface.sequelize.query("DELETE FROM users_groups");
-};
-
-const createMessages = async (queryInterface) => {
-  const usersResult = await queryInterface.sequelize.query(
-    "SELECT * FROM users LIMIT 1"
-  );
-  const users = usersResult[0];
-
-  const minUserId = users[0].id;
-  const maxUserId = minUserId + NUMBER_OF_USERS - 1;
-
-  const max = NUMBER_OF_MESSAGES;
-  let counter = 0;
-
-  while (counter < max) {
-    const random = getRandomIntInclusive(1, 2);
-    const createPrivate = random === 1 ? true : false;
-    const randomUserId = getRandomIntInclusive(minUserId, maxUserId);
-
-    const message = {
-      sender_id: randomUserId,
-      content: `Message from ${randomUserId}`,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-
-    if (createPrivate) {
-      message.receiver_id = getRandomIntInclusive(minUserId, maxUserId);
-    } else {
-      const userGroup = await queryInterface.sequelize.query(
-        `SELECT group_id 
-         FROM users_groups 
-         WHERE user_id = ${randomUserId}`,
-        { raw: true, nest: true }
+    if (currentHour < WORKING_HOURS.start) {
+      date.setDate(date.getDate() - 1);
+      date.setHours(
+        getRandomIntInclusive(WORKING_HOURS.start, WORKING_HOURS.end),
+        getRandomIntInclusive(0, 59),
+        0,
+        0
       );
-      if (userGroup.length === 0) {
-        message.receiver_id = getRandomIntInclusive(minUserId, maxUserId);
-      } else {
-        const rand = Math.floor(Math.random() * userGroup.length);
-        message.group_id = userGroup[rand].group_id;
-      }
+    } else if (
+      currentHour >= WORKING_HOURS.start &&
+      currentHour < WORKING_HOURS.end
+    ) {
+      date.setHours(
+        getRandomIntInclusive(WORKING_HOURS.start, currentHour),
+        currentHour === WORKING_HOURS.start
+          ? getRandomIntInclusive(0, currentMinute)
+          : getRandomIntInclusive(0, 59),
+        0,
+        0
+      );
+    } else {
+      date.setHours(
+        getRandomIntInclusive(WORKING_HOURS.start, WORKING_HOURS.end),
+        getRandomIntInclusive(0, 59),
+        0,
+        0
+      );
     }
-
-    try {
-      await queryInterface.insert(null, "messages", message);
-    } catch (e) {
-      console.log("🚀 ~ createGroupMessages ~ e:", e);
-      continue;
-    }
-
-    counter++;
+  } else {
+    date.setHours(
+      getRandomIntInclusive(WORKING_HOURS.start, WORKING_HOURS.end),
+      getRandomIntInclusive(0, 59),
+      0,
+      0
+    );
   }
-};
 
-const deleteMessages = async (queryInterface) => {
-  await queryInterface.sequelize.query("DELETE FROM messages");
-};
-
-const createImages = async (queryInterface) => {
-  const messageResult = await queryInterface.sequelize.query(
-    "SELECT * FROM messages LIMIT 1"
-  );
-  const message = messageResult[0];
-
-  const minMessageId = message[0].id;
-  const maxMessageId = minMessageId + NUMBER_OF_MESSAGES - 1;
-
-  const max = NUMBER_OF_IMAGES;
-  let counter = 0;
-
-  while (counter < max) {
-    const randomMessageId = getRandomIntInclusive(minMessageId, maxMessageId);
-
-    const image = {
-      message_id: randomMessageId,
-      name: `Immage from ${randomMessageId}`,
-      url: "https://lucid.app/lucidchart/f6a1bb32-9585-4d50-8ced-6b4666847972/edit?beaconFlowId=6A04FC88B71845A4&invitationId=inv_056845fc-6032-4017-b36f-7d156c8c0fd2&page=0_0#?referredproduct=",
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-
-    try {
-      await queryInterface.insert(null, "images", image);
-    } catch (e) {
-      console.log("🚀 ~ createGroupMessages ~ e:", e);
-      continue;
-    }
-
-    counter++;
-  }
-};
-
-const deleteImages = async (queryInterface) => {
-  await queryInterface.sequelize.query("DELETE FROM images");
+  return date;
 };
 
 module.exports = {
   async up(queryInterface) {
-    await createUser(queryInterface);
-    await createGroups(queryInterface);
-    await createUsersGroups(queryInterface);
-    await createMessages(queryInterface);
-    await createImages(queryInterface);
+    const users = await Promise.all(
+      userNames.map(async ([first_name, last_name], i) => ({
+        first_name,
+        last_name,
+        email: `email${i}@mail.com`,
+        password: await hashPassword("1234"),
+        created_at: new Date(),
+        updated_at: new Date(),
+      }))
+    );
+    await queryInterface.bulkInsert("users", users);
+    const createdUsers = await queryInterface.sequelize.query(
+      "SELECT id FROM users",
+      {
+        type: queryInterface.sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    const groups = groupNames.map((name) => ({
+      id: crypto.randomUUID(),
+      name,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }));
+    await queryInterface.bulkInsert("groups", groups);
+    const createdGroups = await queryInterface.sequelize.query(
+      "SELECT id FROM groups",
+      {
+        type: queryInterface.sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    const usersGroups = [];
+    createdUsers.forEach((user) => {
+      const groupCount = getRandomIntInclusive(
+        GROUPS_PER_USER_MIN,
+        GROUPS_PER_USER_MAX
+      );
+      shuffleArray([...createdGroups])
+        .slice(0, groupCount)
+        .forEach((group) => {
+          usersGroups.push({ user_id: user.id, group_id: group.id });
+        });
+    });
+    await queryInterface.bulkInsert("users_groups", usersGroups);
+
+    const messages = [];
+    const now = new Date();
+
+    for (let i = 0; i < createdUsers.length; i++) {
+      for (let j = i + 1; j < createdUsers.length; j++) {
+        const dialoguesCount = getRandomIntInclusive(
+          DIALOGUES_PER_CHAT_MIN,
+          DIALOGUES_PER_CHAT_MAX
+        );
+        const selectedDialogues = shuffleArray([...DIALOGUES]).slice(
+          0,
+          dialoguesCount
+        );
+
+        for (let dayOffset = 0; dayOffset < dialoguesCount; dayOffset++) {
+          const dialogue = selectedDialogues[dayOffset];
+          const dayStart = getRandomTimeForDay(dayOffset);
+
+          if (dayStart > now) continue;
+
+          dialogue.messages.forEach((msg) => {
+            const messageTime = new Date(
+              dayStart.getTime() + msg.delay * 60000
+            );
+            if (messageTime > now) return;
+
+            const sender_id =
+              msg.delay % 2 === 0 ? createdUsers[i].id : createdUsers[j].id;
+            const receiver_id =
+              msg.delay % 2 === 0 ? createdUsers[j].id : createdUsers[i].id;
+
+            messages.push({
+              id: crypto.randomUUID(),
+              sender_id,
+              receiver_id,
+              content: msg.content,
+              created_at: messageTime,
+              updated_at: new Date(),
+            });
+          });
+        }
+      }
+    }
+
+    for (const group of createdGroups) {
+      const groupUserIds = usersGroups
+        .filter((ug) => ug.group_id === group.id)
+        .map((ug) => ug.user_id);
+
+      if (groupUserIds.length === 0) continue;
+
+      const dialoguesCount = getRandomIntInclusive(
+        DIALOGUES_PER_CHAT_MIN,
+        DIALOGUES_PER_CHAT_MAX
+      );
+      const selectedDialogues = shuffleArray([...DIALOGUES]).slice(
+        0,
+        dialoguesCount
+      );
+
+      for (let dayOffset = 0; dayOffset < dialoguesCount; dayOffset++) {
+        const dialogue = selectedDialogues[dayOffset];
+        const dayStart = getRandomTimeForDay(dayOffset);
+
+        if (dayStart > now) continue;
+
+        dialogue.messages.forEach((msg) => {
+          const messageTime = new Date(dayStart.getTime() + msg.delay * 60000);
+          if (messageTime > now) return;
+
+          messages.push({
+            id: crypto.randomUUID(),
+            sender_id:
+              groupUserIds[Math.floor(Math.random() * groupUserIds.length)],
+            group_id: group.id,
+            content: msg.content,
+            created_at: messageTime,
+            updated_at: new Date(),
+          });
+        });
+      }
+    }
+
+    await queryInterface.bulkInsert("messages", messages);
   },
 
   async down(queryInterface) {
-    await deleteUsers(queryInterface);
-    await deleteGroups(queryInterface);
-    await deleteUsersGroups(queryInterface);
-    await deleteMessages(queryInterface);
-    await deleteImages(queryInterface);
+    await queryInterface.bulkDelete("messages", null);
+    await queryInterface.bulkDelete("users_groups", null);
+    await queryInterface.bulkDelete("groups", null);
+    await queryInterface.bulkDelete("users", null);
   },
 };

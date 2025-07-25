@@ -3,7 +3,7 @@ info:
   title: Messenger.
   version: 1.0.0
 servers:
-  - url: http://localhost:3000
+  - url: http://localhost:3001
     description: Development server
 
 paths:
@@ -21,7 +21,7 @@ paths:
       responses:
         201:
           description: Token created.
-        404:
+        400:
           description: No such user exists or wrong password.
         500:
           description: Server error.
@@ -40,7 +40,7 @@ paths:
       responses:
         201:
           description: User registered.
-        400:
+        409:
           description: User with this email already exists.
         500:
           description: Server error.
@@ -85,7 +85,7 @@ paths:
         201:
           description: Password changed in database.
         400:
-          description: New passwords do not match or Wrong password.
+          description: Wrong password.
         401:
           description: Not authorized.
         500:
@@ -106,14 +106,107 @@ paths:
         500:
           description: Server error.
 
-  /users/list:
+  /use-cases/search:
     get:
+      security:
+        - bearerAuth: []
       tags:
-        - Users
-      summary: List all users.
+        - UseCases
+      summary: Search for users and groups the user is a member.
+      parameters:
+        - in: query
+          name: searchText
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: Search query string.
       responses:
         200:
           description: Succes.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
+  /use-cases/mark-as-deleted:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - UseCases
+      summary: Delete dialog for user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - companionId
+              properties:
+                companionId:
+                  type: string
+                  format: uuid
+                  description: ID of the conversation participant
+                  example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        200:
+          description: Messages marked as deleted successfully.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
+  /use-cases/create-group:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - UseCases
+      summary: Create new group.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/createGroup"
+      responses:
+        200:
+          description: Group created successfully.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
+  /use-cases/search-users:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - UseCases
+      summary: Search users by name or email who are not members of a specific group.
+      parameters:
+        - in: query
+          name: searchText
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: Search query string.
+        - in: query
+          name: groupId
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the group in UUID format.
+      responses:
+        200:
+          description: Search results returned successfully.
+        401:
+          description: Not authorized.
         500:
           description: Server error.
 
@@ -129,23 +222,28 @@ components:
       additionalProperties: false
       required:
         - password
-        - userEmail
+        - email
+        - firstName
       properties:
         firstName:
           type: string
-          description: User first name
+          pattern: "^\\S+$"
+          description: First name of the user (no spaces allowed)
           example: Don
         lastName:
           type: string
-          description: User last name
+          pattern: '^\S*$'
+          description: Last name of the user (optional, no spaces allowed if provided)
           example: Stell
-        userEmail:
+        email:
           type: string
-          description: User email
+          pattern: "^\\S+$"
+          description: Email address of the user (no spaces allowed)
           example: admin@example.com
         password:
           type: string
-          description: User password
+          pattern: "^\\S+$"
+          description: Account password (no spaces allowed)
           example: "1234"
 
     loginUser:
@@ -157,11 +255,11 @@ components:
       properties:
         email:
           type: string
-          description: User email
+          description: Registered email address of the user
           example: admin@example.com
         password:
           type: string
-          description: Password user.
+          description: Account password associated with the email
           example: "1234"
 
     updateProfile:
@@ -170,16 +268,14 @@ components:
       properties:
         firstName:
           type: string
-          description: User first name.
+          pattern: "^\\S+$"
+          description: New first name for the user profile (no spaces allowed)
           example: Derek
         lastName:
           type: string
-          description: User last name.
+          pattern: "^\\S+$"
+          description: New last name for the user profile (no spaces allowed)
           example: Jordan
-        email:
-          type: string
-          description: New user email.
-          example: pete7833@examples.com
 
     changePasswordProfile:
       type: object
@@ -187,17 +283,43 @@ components:
       required:
         - oldPassword
         - newPassword
-        - repeatNewPassword
       properties:
         oldPassword:
           type: string
-          description: Old user password
+          pattern: "^\\S+$"
+          description: Current password of the user account (no spaces allowed)
           example: "1234"
         newPassword:
           type: string
-          description: New user password
+          pattern: "^\\S+$"
+          description: New password to replace the current one (no spaces allowed)
           example: "12345"
-        repeatNewPassword:
+
+    createGroup:
+      type: object
+      additionalProperties: false
+      required:
+        - groupId
+        - groupName
+        - notificationMessage
+        - messageId
+      properties:
+        groupId:
           type: string
-          description: Repeat new user password
-          example: "12345"
+          pattern: "^\\S+$"
+          description: Unique identifier for the new group in UUID format
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        groupName:
+          type: string
+          pattern: "^[^\s]+(?: [^\s]+)*$"
+          description: Name for the new group (leading/trailing spaces not allowed)
+          example: "Travel"
+        notificationMessage:
+          type: string
+          description: Initial notification message sent to group members
+          example: "Group create"
+        messageId:
+          type: string
+          pattern: "^\\S+$"
+          description: Unique identifier for the initial message in UUID format
+          example: "123e4567-e89b-12d3-a456-426614174000"

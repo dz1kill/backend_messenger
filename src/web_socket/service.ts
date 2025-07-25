@@ -1,83 +1,73 @@
 import { JwtPayload } from "jsonwebtoken";
 import sequelize from "../models";
-import { Message } from "../models/message";
 import {
   ParramAddUserInGroup,
+  ParramDropGroup,
   ParramLastMessagesDialog,
   ParramLastMessagesGroup,
   ParramLeaveGroup,
   ParramListLastMessage,
   ParramMessageGroup,
-  ParramNewGroup,
   ParramPrivateMessage,
   ParramsResultSuccessResponse,
   ReqMessageDTO,
+  ResDatalatestMessageDialog,
+  ResDataLatestMessageGroup,
+  ResDataListLastMessage,
 } from "./types";
 import { UserGroup } from "../models/group_user";
-import { Group } from "../models/group";
 import WebSocket from "ws";
-import {
-  buildSuccessResponse,
-  calcOffset,
-  transformArrUserGroup,
-} from "./helper";
-import { Transaction } from "sequelize";
+import { buildSuccessResponse, transformArrUserGroup } from "./helper";
+import { QueryTypes, Transaction } from "sequelize";
 import {
   ADD_USER_IN_GROUP,
+  DROP_GROUP,
   LEAVE_GROUP,
   MESSAGE_IN_GROUP,
   PRIVATE_MESSAGE,
 } from "./constants";
 
-const checkUserGroup = async (userId: number, groupId: number) => {
+const checkUserGroup = async (
+  userId: string,
+  groupId: string
+): Promise<boolean> => {
   const result = await sequelize.query(
     `  
   SELECT * FROM users_groups
-  WHERE user_id = ${userId} AND group_id = ${groupId}`,
+  WHERE user_id = '${userId}' AND group_id = '${groupId}'`,
     { raw: true, nest: true, model: UserGroup }
   );
-  if (result.length === 0) {
-    throw { message: "User is not a member of this group" };
-  }
+
+  return result.length > 0;
 };
 
-const insertGroup = async (groupName: string, trx: Transaction) =>
-  await sequelize.query(
-    `
-INSERT INTO groups (name, created_at, updated_at, deleted_at )
-VALUES ('${groupName}',CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
-RETURNING id;
-`,
-    { raw: true, nest: true, model: Group, transaction: trx }
-  );
-
 const insertUserGroup = async (
-  groupId: number,
-  userId: number,
+  groupId: string,
+  userId: string,
   trx: Transaction
 ) =>
   await sequelize.query(
     `
   INSERT INTO users_groups (group_id, user_id)
-  VALUES (${groupId}, ${userId})
+  VALUES ('${groupId}', '${userId}')
  `,
     { model: UserGroup, transaction: trx }
   );
 
-const selectUsersGroup = async (groupId: number) =>
+const selectUsersGroup = async (groupId: string) =>
   await sequelize.query(
     `
   SELECT user_id as "userId"
   FROM users_groups
-  WHERE group_id = ${groupId}
+  WHERE group_id = '${groupId}'
   `,
     { nest: true, raw: true, model: UserGroup }
   );
 
 const sendingMessages = (
-  recipientIds: number[],
+  recipientIds: string[],
   userConnections: Map<JwtPayload, WebSocket>,
-  senderId: number,
+  senderId: string,
   data: ParramsResultSuccessResponse,
   scope: string
 ) => {
@@ -91,132 +81,221 @@ const sendingMessages = (
 };
 
 const getDblatestMessageDialog = async (
-  senderId: number,
-  receiverId: number,
+  senderId: string,
+  receiverId: string,
   limit: number,
-  offset: number
+  cursorCreatedAt: string
 ) =>
-  await sequelize.query(
-    `
-  SELECT sender_id, receiver_id,users.first_name as "receverName", content,  messages.created_at 
-  FROM messages
-
-  INNER JOIN images ON messages.id = images.message_id
-  LEFT JOIN users ON messages.receiver_id = users.id
-
-  WHERE sender_id = ${senderId} AND receiver_id = ${receiverId}
-       OR sender_id = ${receiverId} AND receiver_id = ${senderId}  
-  LIMIT ${limit} 
-  OFFSET ${offset}`,
-    { raw: true, nest: true, model: Message }
+  await sequelize.query<ResDatalatestMessageDialog>(
+    `SELECT
+   messages.id AS "messageId",
+   sender_id AS "senderId",
+   sender.first_name AS "senderName",
+   receiver_id AS "receiverId",
+   receiver.first_name AS "receiverName",
+   content,
+   messages.created_at AS "createdAt"
+FROM messages
+LEFT JOIN users AS sender ON sender.id = messages.sender_id
+LEFT JOIN users AS receiver ON receiver.id = messages.receiver_id
+WHERE (sender_id = '${senderId}' AND receiver_id = '${receiverId}'
+    OR sender_id = '${receiverId}' AND receiver_id = '${senderId}')
+      AND (
+    messages.deleted_by_users IS NULL 
+    OR NOT messages.deleted_by_users @> ARRAY['${senderId}'::uuid]
+  )
+${
+  cursorCreatedAt
+    ? `AND messages.created_at < TIMESTAMP '${cursorCreatedAt}'`
+    : ""
+}
+ORDER BY messages.created_at DESC
+LIMIT ${limit}
+  `,
+    { raw: true, nest: true, type: QueryTypes.SELECT }
   );
 
 const getDblistLastMessage = async (
-  userId: number,
+  userId: string,
   limit: number,
-  offset: number
+  cursorCreatedAt: string | null
 ) =>
-  await sequelize.query(
-    `WITH numbered_messages AS (
-      SELECT messages.id, sender_id, receiver_id, group_id, content, messages.created_at, messages.updated_at , messages.deleted_at,
-             ROW_NUMBER() OVER(PARTITION BY sender_id, receiver_id, group_id ORDER BY messages.created_at DESC) AS r_number,
-             groups.name as "groupName", users.first_name as "senderName",
-             receivers.first_name as "receiverName"
-      FROM messages   
-      
-      LEFT JOIN groups ON messages.group_id = groups.id
-      LEFT JOIN users ON messages.sender_id = users.id
-      LEFT JOIN users AS receivers ON messages.receiver_id = receivers.id
-  
-      WHERE sender_id = ${userId} OR receiver_id = ${userId} OR group_id IN (
-        SELECT group_id
-        FROM users_groups
-        WHERE user_id = ${userId}
+  await sequelize.query<ResDataListLastMessage>(
+    `WITH user_conversations AS (
+  SELECT 
+    CASE 
+      WHEN group_id IS NOT NULL THEN 'group_' || group_id
+      WHEN sender_id < receiver_id THEN 'private_' || sender_id || '_' || receiver_id
+      ELSE 'private_' || receiver_id || '_' || sender_id
+    END AS conversation_id,
+    MAX(messages.created_at) AS last_message_time
+  FROM messages
+  WHERE
+      (
+      (group_id IS NULL AND (
+        sender_id = '${userId}' OR receiver_id = '${userId}'
+      ) AND (
+        deleted_by_users IS NULL 
+        OR NOT deleted_by_users @> ARRAY['${userId}'::uuid]
+      ))
+      OR (
+        group_id IS NOT NULL
+        AND group_id IN (
+          SELECT group_id FROM users_groups WHERE user_id = '${userId}'
+        )
       )
-  )
-  SELECT id, sender_id as "senderId", "senderName", receiver_id as "receiverId", "receiverName", group_id as "groupId", "groupName", content,
-     created_at as "createdAt", updated_at as "updatedAt" , deleted_at as "deletedAt"
-     
-  FROM numbered_messages
-  WHERE r_number = 1
-  ORDER BY created_at DESC
-  LIMIT ${limit} 
-  OFFSET ${offset}
-`,
-    { raw: true, nest: true, model: Message }
+    )
+
+  GROUP BY conversation_id
+  ${
+    cursorCreatedAt
+      ? `HAVING MAX(messages.created_at) < '${cursorCreatedAt}'`
+      : ""
+  }
+  ORDER BY last_message_time DESC
+  LIMIT ${limit}
+),
+last_messages AS (
+  SELECT 
+    m.id, 
+    m.sender_id, 
+    m.receiver_id, 
+    m.group_id, 
+    m.content, 
+    m.created_at, 
+    m.updated_at, 
+    m.deleted_at,
+    g.name AS "groupName", 
+    u.first_name AS "senderName",
+    u.last_name AS "senderLastName",
+    r.last_name AS "receiverLastName",
+    r.first_name AS "receiverName",
+    CASE 
+      WHEN m.group_id IS NOT NULL THEN 'group_' || m.group_id
+      WHEN m.sender_id < m.receiver_id THEN 'private_' || m.sender_id || '_' || m.receiver_id
+      ELSE 'private_' || m.receiver_id || '_' || m.sender_id
+    END AS conversation_id
+  FROM messages m
+  JOIN user_conversations uc ON 
+    CASE 
+      WHEN m.group_id IS NOT NULL THEN 'group_' || m.group_id
+      WHEN m.sender_id < m.receiver_id THEN 'private_' || m.sender_id || '_' || m.receiver_id
+      ELSE 'private_' || m.receiver_id || '_' || m.sender_id
+    END = uc.conversation_id
+    AND m.created_at = uc.last_message_time
+  LEFT JOIN groups g ON m.group_id = g.id
+  LEFT JOIN users u ON m.sender_id = u.id
+  LEFT JOIN users r ON m.receiver_id = r.id
+)
+
+SELECT 
+  id as "messageId", 
+  sender_id AS "senderId", 
+  "senderName", 
+  "senderLastName",
+  receiver_id AS "receiverId", 
+  "receiverName", 
+  "receiverLastName",
+  group_id AS "groupId", 
+  "groupName", 
+  content,
+  created_at AS "createdAt", 
+  updated_at AS "updatedAt", 
+  deleted_at AS "deletedAt"
+FROM last_messages
+ORDER BY "createdAt" DESC;`,
+    { raw: true, nest: true, type: QueryTypes.SELECT }
   );
 
 const getDblatestMessageGroup = async (
-  groupId: number,
+  groupId: string,
   limit: number,
-  offset: number
+  cursorCreatedAt: string
 ) =>
-  await sequelize.query(
+  await sequelize.query<ResDataLatestMessageGroup>(
     `
-    SELECT sender_id, users.first_name as "senderName", group_id, messages.created_at , content
+    SELECT
+      messages.notification,
+      messages.id AS "messageId",
+      messages.sender_id AS "senderId",
+      users.first_name AS "senderName",
+      users.last_name AS "senderLastName",
+      messages.group_id AS "groupId",
+      groups.name AS "groupName",
+      messages.content,
+      messages.created_at AS "createdAt"
     FROM messages
-  
     LEFT JOIN users ON messages.sender_id = users.id
-    INNER JOIN images ON messages.id = images.message_id
-  
-    WHERE group_id = ${groupId}
-    LIMIT ${limit}
-    OFFSET ${offset}   
-    
-`,
-    { raw: true, nest: true, model: Message }
+    LEFT JOIN groups ON messages.group_id = groups.id
+    WHERE 
+      messages.group_id = :groupId AND
+      messages.deleted_at IS NULL
+      ${cursorCreatedAt ? `AND messages.created_at < :cursorCreatedAt` : ""}
+    ORDER BY messages.created_at DESC 
+    LIMIT :limit
+  `,
+    {
+      replacements: {
+        groupId,
+        limit,
+        ...(cursorCreatedAt && { cursorCreatedAt }),
+      },
+      raw: true,
+      nest: true,
+      type: QueryTypes.SELECT,
+    }
   );
 
-const dropUserGroup = async (userId: number, groupId: number) => {
+const dropUserGroup = async (userId: string, groupId: string) => {
   await sequelize.query(
     `
     DELETE FROM users_groups
-    WHERE group_id = ${groupId} AND user_id = ${userId}`,
+    WHERE group_id = '${groupId}' AND user_id = '${userId}'`,
     { model: UserGroup }
   );
 };
 
 const insertMessageGroup = async (
-  senderId: number,
-  groupId: number,
-  content: string
-) => {
-  await sequelize.query(
+  senderId: string,
+  groupId: string,
+  content: string,
+  messageId: string,
+  notification: boolean
+) =>
+  await sequelize.query<Promise<{ createdAt: string } | null>>(
     `
-  
-  INSERT INTO messages (sender_id, receiver_id, group_id, content,  created_at, updated_at, deleted_at )
-  VALUES (${senderId}, NULL, ${groupId}, '${content}' ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+  INSERT INTO messages (id, sender_id, receiver_id, group_id, content, notification, created_at, updated_at, deleted_at )
+  VALUES ('${messageId}', '${senderId}', NULL, '${groupId}', '${content}', ${notification} ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+  RETURNING created_at as "createdAt"
 
   `,
-    { model: Message }
+    { raw: true, nest: true, type: QueryTypes.SELECT }
   );
-};
 
 const insertPrivateMessage = async (
-  senderId: number,
-  receiverId: number,
-  content: string
-) => {
-  await sequelize.query(
+  senderId: string,
+  receiverId: string,
+  content: string,
+  messageId: string
+) =>
+  await sequelize.query<Promise<{ createdAt: string } | null>>(
     `
   
-  INSERT INTO messages (sender_id, receiver_id, group_id, content,  created_at, updated_at, deleted_at )
-  VALUES (${senderId}, ${receiverId}, NULL, '${content}' ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+  INSERT INTO messages (id, sender_id, receiver_id, group_id, content,  created_at, updated_at, deleted_at )
+  VALUES ('${messageId}', '${senderId}', '${receiverId}', NULL, '${content}' ,CURRENT_TIMESTAMP, CURRENT_TIMESTAMP , NULL )
+  RETURNING created_at as "createdAt"
 
   `,
-    { model: Message }
+    { raw: true, nest: true, type: QueryTypes.SELECT }
   );
-};
 
 export const listLastMessage = async (
   parseMessage: ReqMessageDTO<ParramListLastMessage>,
   client: JwtPayload
 ) => {
   const { id } = client;
-  const { limit, page } = parseMessage.params;
-
-  const offset = calcOffset(page, limit);
-  const result = await getDblistLastMessage(id, limit, offset);
+  const { limit, cursorCreatedAt } = parseMessage.params;
+  const result = await getDblistLastMessage(id, limit, cursorCreatedAt);
 
   return { data: result };
 };
@@ -226,9 +305,13 @@ export const latestMessageDialog = async (
   client: JwtPayload
 ) => {
   const { id } = client;
-  const { limit, page, receiverId } = parseMessage.params;
-  const offset = calcOffset(page, limit);
-  const result = await getDblatestMessageDialog(id, receiverId, limit, offset);
+  const { limit, cursorCreatedAt, receiverId } = parseMessage.params;
+  const result = await getDblatestMessageDialog(
+    id,
+    receiverId,
+    limit,
+    cursorCreatedAt
+  );
 
   return { data: result };
 };
@@ -238,29 +321,16 @@ export const latestMessageGroup = async (
   client: JwtPayload
 ) => {
   const { id } = client;
-  const { limit, page, groupId } = parsedMessage.params;
+  const { limit, cursorCreatedAt, groupId } = parsedMessage.params;
 
-  const offset = calcOffset(page, limit);
-  await checkUserGroup(id, groupId);
-  const result = await getDblatestMessageGroup(groupId, limit, offset);
+  const userInGroup = await checkUserGroup(id, groupId);
+  if (!userInGroup) {
+    throw { message: "User is not a member of this group" };
+  }
+
+  const result = await getDblatestMessageGroup(groupId, limit, cursorCreatedAt);
 
   return { data: result };
-};
-
-export const newGroup = async (
-  parsedMessage: ReqMessageDTO<ParramNewGroup>,
-  client: JwtPayload
-) => {
-  const { id } = client;
-  const { groupName } = parsedMessage.params;
-
-  await sequelize.transaction(async (trx) => {
-    const group = await insertGroup(groupName, trx);
-    const groupId = group[0].id;
-    await insertUserGroup(groupId, id, trx);
-  });
-
-  return {};
 };
 
 export const addUserInGroup = async (
@@ -268,24 +338,64 @@ export const addUserInGroup = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id, email, firstName } = client;
-  const { groupId, userId } = parsedMessage.params;
-  const data: ParramsResultSuccessResponse = {
-    message: `User #${email} added in group.`,
-    senderName: firstName,
-  };
+  const notification = true;
+  const { id, firstName, lastName } = client;
+  const { groupId, userId, groupName, messageId, message } =
+    parsedMessage.params;
 
-  await checkUserGroup(id, groupId);
+  const userInGroup = await checkUserGroup(id, groupId);
+  if (!userInGroup) {
+    throw { message: "User is not a member of this group" };
+  }
+
+  const targetUserInGroup = await checkUserGroup(userId, groupId);
+  if (targetUserInGroup) {
+    throw new Error("the user is already in the group");
+  }
   await sequelize.transaction(async (trx) => {
     await insertUserGroup(groupId, userId, trx);
   });
 
+  const result = await insertMessageGroup(
+    id,
+    groupId,
+    message,
+    messageId,
+    notification
+  );
+  const data: ParramsResultSuccessResponse = {
+    item: {
+      groupId,
+      groupName,
+      messageId,
+      message,
+      senderName: firstName,
+      senderId: id,
+      senderLastName: lastName,
+      notification,
+      createdAt: (await result[0]).createdAt,
+    },
+    isBroadcast: true,
+  };
+
   const usersInGroup = await selectUsersGroup(groupId);
-  const userIds: number[] = transformArrUserGroup(usersInGroup);
+  const userIds: string[] = transformArrUserGroup(usersInGroup);
 
   sendingMessages(userIds, userConnections, id, data, ADD_USER_IN_GROUP);
 
-  return {};
+  return {
+    item: {
+      groupId,
+      groupName,
+      messageId,
+      message,
+      senderName: firstName,
+      senderId: id,
+      senderLastName: lastName,
+      notification,
+      createdAt: (await result[0]).createdAt,
+    },
+  };
 };
 
 export const leaveGroup = async (
@@ -293,22 +403,44 @@ export const leaveGroup = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id, email, firstName } = client;
-  const { groupId } = parsedMessage.params;
+  const notification = true;
+  const { id, firstName, lastName } = client;
+  const { groupId, message, messageId, groupName } = parsedMessage.params;
+
+  const userInGroup = await checkUserGroup(id, groupId);
+  if (!userInGroup) {
+    throw { message: "User is not a member of this group" };
+  }
+  await dropUserGroup(id, groupId);
+  const result = await insertMessageGroup(
+    id,
+    groupId,
+    message,
+    messageId,
+    notification
+  );
+
   const data: ParramsResultSuccessResponse = {
-    message: `User ${email} has left the group.`,
-    senderName: firstName,
+    item: {
+      groupId,
+      groupName,
+      messageId,
+      message,
+      senderName: firstName,
+      senderId: id,
+      senderLastName: lastName,
+      notification,
+      createdAt: (await result[0]).createdAt,
+    },
+    isBroadcast: true,
   };
 
-  await checkUserGroup(id, groupId);
-  await dropUserGroup(id, groupId);
-
   const usersInGroup = await selectUsersGroup(groupId);
-  const userIds: number[] = transformArrUserGroup(usersInGroup);
+  const userIds: string[] = transformArrUserGroup(usersInGroup);
 
   sendingMessages(userIds, userConnections, id, data, LEAVE_GROUP);
 
-  return {};
+  return { item: { groupId } };
 };
 
 export const sendMessageGroup = async (
@@ -316,19 +448,39 @@ export const sendMessageGroup = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id, firstName } = client;
-  const { groupId, content } = parsedMessage.params;
+  const notification = false;
+  const { id, firstName, lastName } = client;
+  const { groupId, content, messageId, groupName } = parsedMessage.params;
+  const userInGroup = await checkUserGroup(id, groupId);
+  if (!userInGroup) {
+    throw { message: "User is not a member of this group" };
+  }
+
+  const result = await insertMessageGroup(
+    id,
+    groupId,
+    content,
+    messageId,
+    notification
+  );
+
   const data: ParramsResultSuccessResponse = {
-    message: content,
-    senderName: firstName,
+    item: {
+      groupId,
+      groupName,
+      messageId,
+      message: content,
+      senderName: firstName,
+      senderLastName: lastName,
+      notification,
+      senderId: id,
+      createdAt: (await result[0]).createdAt,
+    },
+    isBroadcast: true,
   };
-
-  await checkUserGroup(id, groupId);
-  insertMessageGroup(id, groupId, content);
-
   const usersInGroup = await selectUsersGroup(groupId);
-  const userIds: number[] = transformArrUserGroup(usersInGroup);
 
+  const userIds: string[] = transformArrUserGroup(usersInGroup);
   sendingMessages(userIds, userConnections, id, data, MESSAGE_IN_GROUP);
 
   return {};
@@ -339,16 +491,61 @@ export const sendPrivateMessage = async (
   client: JwtPayload,
   userConnections: Map<JwtPayload, WebSocket>
 ) => {
-  const { id, firstName } = client;
-  const { receiverId, content } = parsedMessage.params;
+  const { id, firstName, lastName } = client;
+  const { receiverId, content, messageId } = parsedMessage.params;
   const receiverIdArr = [receiverId];
+
+  const result = await insertPrivateMessage(id, receiverId, content, messageId);
+
   const data: ParramsResultSuccessResponse = {
-    message: content,
-    senderName: firstName,
+    item: {
+      messageId,
+      message: content,
+      senderName: firstName,
+      senderLastName: lastName,
+      senderId: id,
+      createdAt: (await result[0]).createdAt,
+    },
+    isBroadcast: true,
   };
 
-  await insertPrivateMessage(id, receiverId, content);
   sendingMessages(receiverIdArr, userConnections, id, data, PRIVATE_MESSAGE);
 
   return {};
+};
+
+const dropGroupDB = async (groupId: string) => {
+  await sequelize.query(
+    `
+   DELETE FROM groups WHERE id = '${groupId}';
+    `,
+    { model: UserGroup }
+  );
+};
+
+export const deleteGroup = async (
+  parsedMessage: ReqMessageDTO<ParramDropGroup>,
+  client: JwtPayload,
+  userConnections: Map<JwtPayload, WebSocket>
+) => {
+  const { id } = client;
+  const { groupId } = parsedMessage.params;
+  const userInGroup = await checkUserGroup(id, groupId);
+  if (!userInGroup) {
+    throw { message: "User is not a member of this group" };
+  }
+
+  const data: ParramsResultSuccessResponse = {
+    item: {
+      groupId,
+    },
+    isBroadcast: true,
+  };
+
+  const usersInGroup = await selectUsersGroup(groupId);
+  const userIds: string[] = transformArrUserGroup(usersInGroup);
+  await dropGroupDB(groupId);
+  sendingMessages(userIds, userConnections, id, data, DROP_GROUP);
+
+  return { item: { groupId } };
 };

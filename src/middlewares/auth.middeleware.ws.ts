@@ -10,14 +10,27 @@ export const authMiddlewareWs = (
   head: Buffer
 ) => {
   try {
-    const token = request.headers.authorization.split(" ")[1];
+    let token = null;
+    if (request.headers.authorization) {
+      const parts = request.headers.authorization.split(" ");
+      if (parts.length === 2 && parts[0] === "Bearer") {
+        token = parts[1];
+      }
+    }
+    if (!token && request.headers["sec-websocket-protocol"]) {
+      const protocols = request.headers["sec-websocket-protocol"];
+      const protocolParts = protocols.split(",").map((p) => p.trim());
+      if (protocolParts.length >= 2) {
+        token = protocolParts[1];
+      }
+    }
     const data = jwt.verify(token, config.get("JWT.key"));
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit("connection", ws, request, data);
     });
-  } catch (e) {
-    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
-    socket.destroy();
-    return;
+  } catch (err) {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      ws.close(4001, `Unauthorized`);
+    });
   }
 };
