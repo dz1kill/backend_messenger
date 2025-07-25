@@ -5,7 +5,7 @@
 This is a minimum viable product (MVP) of a messenger, including:
 
 - **Backend**: REST API for user management & WebSocket API for real-time messaging.
-- **Frontend**: A companion web client : https://github.com/dz1kill/frontend_messenger
+- **Frontend**: A companion web client - [GitHub Repository](https://github.com/dz1kill/frontend_messenger)
 
 ## ✨ Key Features
 
