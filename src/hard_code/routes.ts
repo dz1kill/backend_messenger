@@ -1,7 +1,7 @@
 import * as express from "express";
 
 import { authMiddleware } from "../middlewares/auth.middeleware";
-import { managmentMigrate } from "./controller";
+import { managmentSeed } from "./controller";
 
 export const hardCode: express.IRouter = express.Router();
-hardCode.post("/migrate", authMiddleware, managmentMigrate);
+hardCode.post("/migrate", authMiddleware, managmentSeed);

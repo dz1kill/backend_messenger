@@ -2,7 +2,7 @@ import * as express from "express";
 import sequelize from "../models";
 import { addSeed } from "./seed";
 
-export async function managmentMigrate(req, res: express.Response) {
+export async function managmentSeed(req, res: express.Response) {
   try {
     const { param } = req.body;
 
@@ -14,14 +14,14 @@ export async function managmentMigrate(req, res: express.Response) {
         )
       );
       return res.status(200).json({
-        message: "All migrations undone successfully",
+        message: "All drop data successfully",
       });
     } else if (param === "start") {
       addSeed();
 
       return res
         .status(200)
-        .json({ message: "Migrations completed successfully" });
+        .json({ message: "add seed completed successfully" });
     } else {
       return res
         .status(400)
