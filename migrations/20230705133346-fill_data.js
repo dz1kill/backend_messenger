@@ -226,6 +226,15 @@ module.exports = {
       }))
     );
     await queryInterface.bulkInsert("users", users);
+    await queryInterface.bulkInsert("users", {
+      first_name: "Admin",
+      last_name: "Adminovich",
+      email: `dz1k@mail.com`,
+      password: await hashPassword("1234"),
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+
     const createdUsers = await queryInterface.sequelize.query(
       "SELECT id FROM users",
       {
