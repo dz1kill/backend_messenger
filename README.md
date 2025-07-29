@@ -76,7 +76,7 @@ $ npm run dev
 
 ## 🔗 Links
 
-Documentation (Swagger UI) is available at: [link] http://localhost:3001/api/
+Documentation (Swagger UI) is available at: [link] http://localhost:3001/doc/
 
 Websocket server: ws://localhost:3001/
 
