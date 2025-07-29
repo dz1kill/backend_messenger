@@ -4,6 +4,7 @@ import {
   Model,
   DataType,
   BelongsToMany,
+  PrimaryKey,
 } from "sequelize-typescript";
 import { Group } from "./group";
 import { UserGroup } from "./group_user";
@@ -14,6 +15,7 @@ import { UserGroup } from "./group_user";
   underscored: true,
 })
 export class User extends Model {
+  @PrimaryKey
   @Column({
     type: DataType.UUID(),
     primaryKey: true,
