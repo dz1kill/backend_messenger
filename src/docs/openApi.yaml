@@ -7,7 +7,7 @@ servers:
     description: Development server
 
 paths:
-  /auth/login:
+  /api/auth/login:
     post:
       tags:
         - Auth
@@ -26,7 +26,7 @@ paths:
         500:
           description: Server error.
 
-  /auth/sing-up:
+  /api/auth/sing-up:
     post:
       tags:
         - Auth
@@ -45,7 +45,7 @@ paths:
         500:
           description: Server error.
 
-  /profile/update:
+  /api/profile/update:
     patch:
       security:
         - bearerAuth: []
@@ -68,7 +68,7 @@ paths:
         500:
           description: Server error.
 
-  /profile/change-password:
+  /api/profile/change-password:
     patch:
       security:
         - bearerAuth: []
@@ -91,7 +91,7 @@ paths:
         500:
           description: Server error.
 
-  /profile/destroy:
+  /api/profile/destroy:
     delete:
       security:
         - bearerAuth: []
@@ -106,7 +106,7 @@ paths:
         500:
           description: Server error.
 
-  /use-cases/search:
+  /api/use-cases/search:
     get:
       security:
         - bearerAuth: []
@@ -130,7 +130,7 @@ paths:
         500:
           description: Server error.
 
-  /use-cases/mark-as-deleted:
+  /api/use-cases/mark-as-deleted:
     post:
       security:
         - bearerAuth: []
@@ -159,7 +159,7 @@ paths:
         500:
           description: Server error.
 
-  /use-cases/create-group:
+  /api/use-cases/create-group:
     post:
       security:
         - bearerAuth: []
@@ -180,7 +180,7 @@ paths:
         500:
           description: Server error.
 
-  /use-cases/search-users:
+  /api/use-cases/search-users:
     get:
       security:
         - bearerAuth: []
@@ -209,6 +209,35 @@ paths:
           description: Not authorized.
         500:
           description: Server error.
+
+  /api/hard-code/migrate:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - HardCode
+      summary: To manage migrations on the server.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - param
+              properties:
+                param:
+                  type: string
+                  description: param "start"|"undo"
+                  example: "start"
+      responses:
+        200:
+          description: Migration complite.
+        401:
+          description: Not authorized.
+        500:
+          description: Server error.
+
 
 components:
   securitySchemes:

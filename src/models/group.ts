@@ -5,11 +5,11 @@ import {
   DataType,
   HasMany,
   BelongsToMany,
+  PrimaryKey,
 } from "sequelize-typescript";
 import { UserGroup } from "./group_user";
 import { User } from "./user";
 import { Message } from "./message";
-import { UUID } from "crypto";
 
 @Table({
   tableName: "groups",
@@ -17,6 +17,7 @@ import { UUID } from "crypto";
   underscored: true,
 })
 export class Group extends Model {
+  @PrimaryKey
   @Column({
     type: DataType.UUID(),
     primaryKey: true,
@@ -35,4 +36,10 @@ export class Group extends Model {
 
   @HasMany(() => Message)
   mssages: Message[];
+
+  @Column({ type: DataType.DATE() })
+  createdAt: Date;
+
+  @Column({ type: DataType.DATE() })
+  updatedAt: Date;
 }

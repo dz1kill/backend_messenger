@@ -6,10 +6,10 @@ import {
   ForeignKey,
   BelongsTo,
   HasMany,
+  PrimaryKey,
 } from "sequelize-typescript";
 import { User } from "./user";
 import { Group } from "./group";
-import { Image } from "./image";
 import { UUID } from "crypto";
 
 @Table({
@@ -18,12 +18,12 @@ import { UUID } from "crypto";
   underscored: true,
 })
 export class Message extends Model {
+  @PrimaryKey
   @Column({
-    type: DataType.UUID(),
-    primaryKey: true,
-    autoIncrement: true,
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
   })
-  id: UUID;
+  id: string;
 
   @Column({
     type: DataType.ARRAY(DataType.UUID),
@@ -69,7 +69,4 @@ export class Message extends Model {
     type: DataType.BOOLEAN(),
   })
   notification: string;
-
-  @HasMany(() => Image)
-  images: Image[];
 }

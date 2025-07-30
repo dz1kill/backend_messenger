@@ -20,7 +20,7 @@ export const wss = new WebSocketServer({ noServer: true });
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use("/api", swaggerUI.serve, swaggerUI.setup(apiSpec));
+app.use("/doc", swaggerUI.serve, swaggerUI.setup(apiSpec));
 app.use(
   OpenApiValidator.middleware({
     apiSpec,
@@ -37,7 +37,7 @@ app.use((err, req, res, next) => {
 
 server.on("upgrade", authMiddlewareWs);
 wss.on("connection", connection);
-app.use("/", router);
+app.use("/api", router);
 
 const start = async () => {
   try {

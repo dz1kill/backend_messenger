@@ -10,6 +10,14 @@ export const authMiddlewareWs = (
   head: Buffer
 ) => {
   try {
+    const path = request.url;
+
+    if (path !== "/api/ws") {
+      socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+      socket.destroy();
+      return;
+    }
+
     let token = null;
     if (request.headers.authorization) {
       const parts = request.headers.authorization.split(" ");

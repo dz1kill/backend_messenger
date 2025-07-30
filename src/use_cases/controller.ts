@@ -1,4 +1,3 @@
-import { User } from "../models/user";
 import * as express from "express";
 import {
   findUserAndGroup,
