@@ -85,8 +85,8 @@ export async function addSeed() {
     User.create({
       firstName: "Admin",
       lastName: "Aminovich",
-      email: `dz1k@mail.com`,
-      password: await hashPassword("1234"),
+      email: `admin@mail.com`,
+      password: await hashPassword("310281"),
     });
     // Groups
     const now = new Date();

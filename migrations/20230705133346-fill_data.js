@@ -230,8 +230,8 @@ module.exports = {
       {
         first_name: "Admin",
         last_name: "Adminovich",
-        email: `dz1k@mail.com`,
-        password: await hashPassword("1234"),
+        email: `admin@mail.com`,
+        password: await hashPassword("310281"),
         created_at: new Date(),
         updated_at: new Date(),
       },
